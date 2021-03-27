@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="5dp">
+
+    <ImageView
+        android:id="@+id/iv_user_img"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="@drawable/ic_user_picture" />
+
+    <TextView
+        android:id="@+id/tv_name_and_num"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:gravity="center"
+        android:textSize="10sp"
+        tools:text="四个字的\n45号" />
+
+</LinearLayout>

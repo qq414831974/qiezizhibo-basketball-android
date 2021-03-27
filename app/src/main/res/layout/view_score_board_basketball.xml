@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="600px"
+    android:layout_height="200px">
+
+    <ImageView
+        android:id="@+id/iv_scoreboard"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@null"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_scoreboard_basketball" />
+
+    <TextView
+        android:id="@+id/tv_score_left"
+        android:layout_width="140px"
+        android:layout_height="60px"
+        android:layout_marginLeft="460px"
+        android:layout_marginTop="35px"
+        android:fontFamily="sans-serif"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="98"
+        android:textAlignment="center"
+        android:textColor="#ffffff"
+        android:textSize="55px"
+        android:textStyle="bold|italic" />
+
+    <TextView
+        android:id="@+id/tv_score_right"
+        android:layout_width="140px"
+        android:layout_height="60px"
+        android:layout_marginLeft="450px"
+        android:layout_marginTop="105px"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="102"
+        android:textAlignment="center"
+        android:textColor="#ffffff"
+        android:textSize="55px"
+        android:textStyle="bold|italic" />
+
+    <TextView
+        android:id="@+id/tv_time"
+        android:layout_width="105px"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="80px"
+        android:layout_marginTop="0px"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="1"
+        android:textAlignment="center"
+        android:textColor="#F98609"
+        android:textSize="90px"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_team_name_left"
+        android:layout_width="245px"
+        android:layout_height="60px"
+        android:layout_marginLeft="220px"
+        android:layout_marginTop="35px"
+        android:gravity="center"
+        android:text="厦门大学嘉庚学院"
+        android:textAlignment="center"
+        android:textColor="#ffffff"
+        android:textSize="27px"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_team_name_right"
+        android:layout_width="245px"
+        android:layout_height="60px"
+        android:layout_marginLeft="220px"
+        android:layout_marginTop="105px"
+        android:gravity="center"
+        android:text="福州大学至诚学院"
+        android:textAlignment="center"
+        android:textColor="#ffffff"
+        android:textSize="27px"
+        android:textStyle="bold" />
+</FrameLayout>

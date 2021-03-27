@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="100dp"
+    android:gravity="center"
+    android:orientation="horizontal"
+    tools:ignore="ContentDescription">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="3dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iv_host_players_2_img"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_user_picture"
+            android:visibility="invisible" />
+
+        <TextView
+            android:id="@+id/tv_host_players_2_name"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center"
+            android:textColor="#101010"
+            android:textSize="10sp"
+            android:visibility="invisible"
+            tools:ignore="SmallSp"
+            tools:text="球员姓名" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_host_double_arrow"
+        android:layout_width="30dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="3dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/ic_double_arrow"
+        android:visibility="invisible" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="3dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iv_host_players_1_img"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_user_picture"
+            android:visibility="invisible" />
+
+        <TextView
+            android:id="@+id/tv_host_players_1_name"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center"
+            android:textColor="#101010"
+            android:textSize="10sp"
+            android:visibility="invisible"
+            tools:ignore="SmallSp"
+            tools:text="球员姓名" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_host_time_min"
+        android:layout_width="25dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        android:textColor="#000000"
+        android:textSize="13sp"
+        android:visibility="invisible"
+        tools:text="23'" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <View
+            android:id="@+id/line_top"
+            android:layout_width="1dp"
+            android:layout_height="0dp"
+            android:layout_weight="0.8"
+            android:background="#000000" />
+
+        <ImageView
+            android:id="@+id/iv_event_ic"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginTop="2dp"
+            tools:background="@drawable/ic_result_start" />
+
+        <TextView
+            android:id="@+id/tv_event_name"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:textColor="#000000"
+            android:textSize="10sp"
+            tools:text="比赛开始" />
+
+        <View
+            android:id="@+id/line_bottom"
+            android:layout_width="1dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#000000" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_guest_time_min"
+        android:layout_width="25dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        android:textColor="#000000"
+        android:textSize="13sp"
+        android:visibility="invisible"
+        tools:text="23'" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="3dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iv_guest_players_1_img"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_user_picture"
+            android:visibility="invisible" />
+
+        <TextView
+            android:id="@+id/tv_guest_players_1_name"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center"
+            android:textColor="#101010"
+            android:textSize="10sp"
+            android:visibility="invisible"
+            tools:ignore="SmallSp"
+            tools:text="球员姓名" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_guest_double_arrow"
+        android:layout_width="30dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="3dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/ic_double_arrow"
+        android:visibility="invisible" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="3dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iv_guest_players_2_img"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_user_picture"
+            android:visibility="invisible" />
+
+        <TextView
+            android:id="@+id/tv_guest_players_2_name"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center"
+            android:textColor="#101010"
+            android:textSize="10sp"
+            android:visibility="invisible"
+            tools:ignore="SmallSp"
+            tools:text="球员姓名" />
+
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="900px"
+    android:layout_height="180px">
+
+    <ImageView
+        android:id="@+id/iv_scoreboard"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@null"
+        android:scaleType="fitXY" />
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="520px"
+        android:layout_height="60px"
+        android:text="福建赛区第一场比赛"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textColor="#ffffff"
+        android:textStyle="bold"
+        android:textSize="35px" />
+
+    <TextView
+        android:id="@+id/tv_score_left"
+        android:layout_width="50px"
+        android:layout_height="55px"
+        android:text="0"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textColor="#ffffff"
+        android:textStyle="bold"
+        android:textSize="39px" />
+
+    <TextView
+        android:id="@+id/tv_score_right"
+        android:layout_width="50px"
+        android:layout_height="55px"
+        android:text="0"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textColor="#ffffff"
+        android:textStyle="bold"
+        android:textSize="39px" />
+
+    <TextView
+        android:id="@+id/tv_time"
+        android:layout_width="111px"
+        android:layout_height="42px"
+        android:text="00:00"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textColor="#ffffff"
+        android:textStyle="bold"
+        android:textSize="28px" />
+
+    <TextView
+        android:id="@+id/tv_team_name_left"
+        android:layout_width="306px"
+        android:layout_height="72px"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textColor="#000000"
+        android:textSize="32px"
+        tools:text="宁波市消防救援支队" />
+
+    <TextView
+        android:id="@+id/tv_team_name_right"
+        android:layout_width="306px"
+        android:layout_height="72px"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textColor="#000000"
+        android:textSize="32px"
+        tools:text="宁波市消防救援支队" />
+
+    <ImageView
+        android:id="@+id/iv_host_color"
+        android:layout_width="53px"
+        android:layout_height="53px"
+        android:background="@null"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_score_board_1_left" />
+
+    <ImageView
+        android:id="@+id/iv_guest_color"
+        android:layout_width="53px"
+        android:layout_height="53px"
+        android:background="@null"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_score_board_1_right" />
+
+</FrameLayout>
