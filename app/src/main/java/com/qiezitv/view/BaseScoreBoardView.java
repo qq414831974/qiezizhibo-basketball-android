@@ -51,19 +51,20 @@ public abstract class BaseScoreBoardView extends FrameLayout {
         if (tvTeamNameHost == null) {
             return;
         }
-        if (teamName != null && teamName.length() > 9) {
-            float textsize = tvTeamNameHost.getTextSize() - (teamName.length() - 9) * 2.5f;
+        if (teamName != null && teamName.length() > 7) {
+            float textsize = tvTeamNameHost.getTextSize() - (teamName.length() - 7) * 2.5f;
             tvTeamNameHost.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
         }
         tvTeamNameHost.setText(teamName);
     }
 
     public void setTeamNameGuest(String teamName) {
+        teamName = "测试测试测试测试";
         if (tvTeamNameGuest == null) {
             return;
         }
-        if (teamName != null && teamName.length() > 9) {
-            float textsize = tvTeamNameGuest.getTextSize() - (teamName.length() - 9) * 2.5f;
+        if (teamName != null && teamName.length() > 7) {
+            float textsize = tvTeamNameGuest.getTextSize() - (teamName.length() - 7) * 2.5f;
             tvTeamNameGuest.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
         }
         tvTeamNameGuest.setText(teamName);

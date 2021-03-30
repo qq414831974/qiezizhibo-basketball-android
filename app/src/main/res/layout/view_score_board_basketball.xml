@@ -83,7 +83,7 @@
         android:text="厦门大学嘉庚学院"
         android:textAlignment="center"
         android:textColor="#ffffff"
-        android:textSize="28px"
+        android:textSize="30px"
         android:textStyle="bold" />
 
     <TextView
@@ -96,6 +96,6 @@
         android:text="福州大学至诚学院"
         android:textAlignment="center"
         android:textColor="#ffffff"
-        android:textSize="28px"
+        android:textSize="30px"
         android:textStyle="bold" />
 </FrameLayout>

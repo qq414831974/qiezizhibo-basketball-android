@@ -24,6 +24,5 @@ public class Player implements Serializable {
     private Integer status;
     private String province;
     private String city;
-    //0：茄子体育，1：青少年，2：茄子fc
     private Integer wechatType;
 }

@@ -42,7 +42,7 @@
         <!--            android:layout_width="50dp"-->
         <!--            android:layout_height="50dp"-->
         <!--            android:layout_marginRight="10dp"-->
-        <!--            tools:src="@drawable/ic_football" />-->
+        <!--            tools:src="@drawable/ic_basketball" />-->
 
         <!--        <TextView-->
         <!--            android:id="@+id/tv_score"-->
@@ -58,7 +58,7 @@
         <!--            android:layout_width="50dp"-->
         <!--            android:layout_height="50dp"-->
         <!--            android:layout_marginLeft="10dp"-->
-        <!--            tools:src="@drawable/ic_football" />-->
+        <!--            tools:src="@drawable/ic_basketball" />-->
 
         <!--        <TextView-->
         <!--            android:id="@+id/tv_guest_team_name"-->

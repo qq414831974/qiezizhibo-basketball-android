@@ -70,7 +70,7 @@
                     android:layout_width="25dp"
                     android:layout_height="25dp"
                     android:layout_marginRight="10dp"
-                    android:src="@drawable/ic_football" />
+                    android:src="@drawable/ic_basketball" />
 
                 <TextView
                     android:id="@+id/tv_score"
@@ -85,7 +85,7 @@
                     android:layout_width="25dp"
                     android:layout_height="25dp"
                     android:layout_marginLeft="10dp"
-                    android:src="@drawable/ic_football" />
+                    android:src="@drawable/ic_basketball" />
 
                 <TextView
                     android:id="@+id/tv_guest_team_name"
