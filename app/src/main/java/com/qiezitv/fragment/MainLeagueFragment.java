@@ -21,10 +21,10 @@ import com.qiezitv.activity.MatchActivity;
 import com.qiezitv.adapter.LeagueAdapter;
 import com.qiezitv.common.http.AutoRefreshTokenCallback;
 import com.qiezitv.common.http.RetrofitManager;
-import com.qiezitv.common.http.entity.ResponseEntity;
-import com.qiezitv.http.request.FootballRequest;
-import com.qiezitv.model.LeagueVO;
-import com.qiezitv.model.Page;
+import com.qiezitv.dto.http.ResponseEntity;
+import com.qiezitv.http.provider.BasketballServiceProvider;
+import com.qiezitv.model.basketball.LeagueVO;
+import com.qiezitv.model.page.Page;
 import com.scwang.smart.refresh.layout.api.RefreshLayout;
 
 import java.util.ArrayList;
@@ -114,7 +114,7 @@ public class MainLeagueFragment extends BaseFragment {
 
     private void requestData(long pageNum, boolean isFresh) {
         closeSoftKeyboard();
-        FootballRequest request = RetrofitManager.getInstance().getRetrofit().create(FootballRequest.class);
+        BasketballServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(BasketballServiceProvider.class);
         String name = TextUtils.isEmpty(etName.getText()) ? null : etName.getText().toString();
         String status = spinnerLeagueStatus.getSelectedItem().toString();
         switch (status) {

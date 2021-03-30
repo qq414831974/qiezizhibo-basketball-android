@@ -10,10 +10,10 @@ import com.qiezitv.R;
 import com.qiezitv.common.Constants;
 import com.qiezitv.common.SharedPreferencesUtil;
 import com.qiezitv.common.http.RetrofitManager;
-import com.qiezitv.common.http.entity.ResponseEntity;
-import com.qiezitv.http.request.AuthRequest;
-import com.qiezitv.http.request.body.LoginBean;
-import com.qiezitv.model.AccessToken;
+import com.qiezitv.dto.http.ResponseEntity;
+import com.qiezitv.http.provider.AuthServiceProvider;
+import com.qiezitv.dto.AdminUserLoginRequest;
+import com.qiezitv.model.auth.AccessToken;
 import com.qiezitv.view.WaitingDialog;
 import com.google.gson.Gson;
 
@@ -73,8 +73,8 @@ public class LoginActivity extends BaseActivity {
         }));
 
         btnLogin.setOnClickListener(v -> {
-            AuthRequest request = RetrofitManager.getInstance().getRetrofit().create(AuthRequest.class);
-            LoginBean loginBean = new LoginBean();
+            AuthServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(AuthServiceProvider.class);
+            AdminUserLoginRequest loginBean = new AdminUserLoginRequest();
             loginBean.setUserName(etUser.getText().toString().trim());
             loginBean.setPassword(etPassword.getText().toString().trim());
             Call<ResponseEntity<AccessToken>> response = request.login(loginBean);

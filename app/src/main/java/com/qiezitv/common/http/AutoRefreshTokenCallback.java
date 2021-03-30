@@ -7,9 +7,10 @@ import android.util.Log;
 
 import com.qiezitv.common.Constants;
 import com.qiezitv.common.SharedPreferencesUtil;
-import com.qiezitv.common.http.entity.ResponseEntity;
-import com.qiezitv.http.request.AuthRequest;
-import com.qiezitv.model.AccessToken;
+import com.qiezitv.dto.AdminUserRefreshTokenRequest;
+import com.qiezitv.dto.http.ResponseEntity;
+import com.qiezitv.http.provider.AuthServiceProvider;
+import com.qiezitv.model.auth.AccessToken;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -46,13 +47,13 @@ public abstract class AutoRefreshTokenCallback<T> implements Callback<T> {
             // 自动刷新token
             SharedPreferencesUtil sp = SharedPreferencesUtil.getInstance();
             String tokenStr = sp.getString(Constants.SP_ACCESS_TOKEN, null);
-            AuthRequest request = RetrofitManager.getInstance().getRetrofit().create(AuthRequest.class);
+            AuthServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(AuthServiceProvider.class);
             Gson gson = new Gson();
 
             new Thread(() -> {
                 try {
                     AccessToken accessToken = gson.fromJson(tokenStr, AccessToken.class);
-                    Call<ResponseEntity<AccessToken>> refreshTokenCall = request.refreshToken(accessToken.getRefreshToken());
+                    Call<ResponseEntity<AccessToken>> refreshTokenCall = request.refreshToken(new AdminUserRefreshTokenRequest(accessToken.getRefreshToken()));
                     Response<ResponseEntity<AccessToken>> refreshTokenResponse = refreshTokenCall.execute();
                     if (refreshTokenResponse.isSuccessful()
                             && refreshTokenResponse.body() != null

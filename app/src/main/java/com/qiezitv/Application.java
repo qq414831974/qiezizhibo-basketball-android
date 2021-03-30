@@ -43,7 +43,7 @@ public class Application extends android.app.Application {
         ImageLoader.getInstance().init(config);
         ImageLoaderUtil.init();
 
-        initCrashHandler();
+//        initCrashHandler();
     }
 
     private void initCrashHandler() {

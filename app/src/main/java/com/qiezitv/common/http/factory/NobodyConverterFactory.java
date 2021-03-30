@@ -1,6 +1,6 @@
 package com.qiezitv.common.http.factory;
 
-import com.qiezitv.common.http.entity.NoBodyEntity;
+import com.qiezitv.dto.http.NoBodyEntity;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;

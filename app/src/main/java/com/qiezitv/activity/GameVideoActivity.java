@@ -8,14 +8,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -23,43 +17,45 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.bigkoo.pickerview.builder.OptionsPickerBuilder;
+import com.bigkoo.pickerview.view.OptionsPickerView;
+import com.contrarywind.interfaces.IPickerViewData;
+import com.google.gson.Gson;
+import com.nostra13.universalimageloader.core.ImageLoader;
 import com.qiezitv.R;
-import com.qiezitv.adapter.ScoreBoardAdapter;
 import com.qiezitv.common.Constants;
 import com.qiezitv.common.FinishActivityManager;
+import com.qiezitv.common.ImageLoaderUtil;
 import com.qiezitv.common.http.AutoRefreshTokenCallback;
 import com.qiezitv.common.http.RetrofitManager;
-import com.qiezitv.common.http.entity.ResponseEntity;
-import com.qiezitv.fragment.ResultFragment;
-import com.qiezitv.http.request.FootballRequest;
-import com.qiezitv.http.request.LiveRequest;
-import com.qiezitv.http.request.ScoreBoardRequest;
-import com.qiezitv.model.ActivityVO;
-import com.qiezitv.model.FootballEvent;
-import com.qiezitv.model.MatchStatusDetail;
-import com.qiezitv.model.MatchVO;
-import com.qiezitv.model.ScoreBoard;
+import com.qiezitv.dto.http.ResponseEntity;
+import com.qiezitv.http.provider.BasketballServiceProvider;
+import com.qiezitv.http.provider.LiveServiceProvider;
+import com.qiezitv.model.activity.ActivityVO;
+import com.qiezitv.model.basketball.MatchStatus;
+import com.qiezitv.model.basketball.MatchStatusVO;
+import com.qiezitv.model.basketball.MatchVO;
+import com.qiezitv.model.basketball.TimeLine;
+import com.qiezitv.pojo.AgainstTeamPickerViewData;
+import com.qiezitv.pojo.BasketballEvent;
+import com.qiezitv.pojo.BasketballTimelineEventData;
+import com.qiezitv.pojo.MatchAgainstVO;
 import com.qiezitv.view.BaseScoreBoardView;
 import com.qiezitv.view.ColorPickerDialog;
-import com.qiezitv.view.HorizontalListView;
 import com.qiezitv.view.ScoreBoardBasketball;
-import com.qiezitv.view.ScoreBoardView;
+import com.qiezitv.view.WaitingDialog;
 import com.qiezitv.view.WaterMarkView;
 import com.laifeng.sopcastsdk.camera.CameraListener;
 import com.laifeng.sopcastsdk.configuration.AudioConfiguration;
@@ -77,19 +73,20 @@ import com.laifeng.sopcastsdk.video.effect.HSLEffect;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.ViewHolder;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import retrofit2.Call;
 import retrofit2.Response;
 
-import static com.qiezitv.model.FootballEvent.FINISH;
-import static com.qiezitv.model.FootballEvent.HALF_TIME;
-import static com.qiezitv.model.FootballEvent.SECOND_HALF;
-import static com.qiezitv.model.FootballEvent.START;
-import static com.qiezitv.model.FootballEvent.UNOPEN;
+import static com.qiezitv.pojo.BasketballEvent.FINISH;
+import static com.qiezitv.pojo.BasketballEvent.NEXT_SETION;
+import static com.qiezitv.pojo.BasketballEvent.PRE_SETION;
+import static com.qiezitv.pojo.BasketballEvent.START;
+import static com.qiezitv.pojo.BasketballEvent.SWITCH_AGAINST;
 
 @SuppressLint("HandlerLeak")
 public class GameVideoActivity extends BaseActivity {
@@ -111,10 +108,7 @@ public class GameVideoActivity extends BaseActivity {
     private TextView tvHint, tvHintBandwidth;
     private SeekBar seekbarZoom;
     private LinearLayout llBottom, llRight, llHintNetwork, llHintPhone;
-    private FrameLayout flResultContainer;
     private WaterMarkView waterMarkContainer;
-
-    private ResultFragment resultFragment;
 
     // 确认对话框
     private DialogPlus confirmDialog;
@@ -130,23 +124,19 @@ public class GameVideoActivity extends BaseActivity {
     private float brightness = 1.0f;
     private boolean isAutoFocus = false;
 
-    private Integer timeSecond = 0;
-    private boolean isTimeCountRun = false;
-
     // 设置比分牌对话框
     private DialogPlus scoreSettingDialog;
     private ImageView ivHostColor, ivGuestColor;
-    private EditText etTime;
     private int hostColor = Color.rgb(255, 0, 0);
     private int guestColor = Color.rgb(0, 0, 255);
-    private String gameTitle, hostTeamName, guestTeamName;
+    private String hostTeamName, guestTeamName, hostTeamHeadImg, guestTeamHeadImg;
+    private Long hostTeamId, guestTeamId;
+    private int section, againstIndex, hostScore, guestScore;
 
-    private MatchVO matchVo;
-    private MatchStatusDetail matchStatusDetail;
-    private ActivityVO activityVo;
+    private MatchVO match;
+    private MatchStatusVO matchStatus;
+    private ActivityVO activity;
 
-    private List<ScoreBoard> scoreBoardList;
-    private ScoreBoard currentScoreBoard;
     private Integer liveQuality;
     private int pushRetryTimes = 0;
     private static final int MAX_RETRY_TIMES = 3;
@@ -161,25 +151,14 @@ public class GameVideoActivity extends BaseActivity {
     private TimerTask mTimerTaskLiveQuality;
     private int SECOND_LIVE_QUALITY = 70;
 
-    //篮球
-    private boolean isBasketball = false;
-
-
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            if (isTimeCountRun && waterMarkContainer.getScoreBoard() != null) {
-                timeSecond++;
-                int min = timeSecond / 60;
-                int second = timeSecond % 60;
-                if(!isBasketball){
-                    waterMarkContainer.getScoreBoard().setTime(String.format(Locale.getDefault(), "%02d:%02d", min, second));
-                }
-                reloadWatermark();
-            }
-            sendEmptyMessageDelayed(1, 1000);
-        }
-    };
+    private int eventType = -1;
+    private BasketballTimelineEventData statusEventData;
+    private TextView statusDetailTvHostTeamName;
+    private TextView statusDetailTvGuestTeamName;
+    private ImageView statusDetailIvHostTeamHeadImg;
+    private ImageView statusDetailIvGuestTeamHeadImg;
+    private TextView statusDetailTvScore;
+    private int currentSwitchAgainst = -1;
 
     private ViewTreeObserver.OnGlobalLayoutListener onGlobalLayoutListener = () -> {
         if (mLFLiveView != null && waterMarkContainer.getScoreBoard() != null) {
@@ -192,32 +171,11 @@ public class GameVideoActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setContentView(R.layout.activity_game_video);
+        setContentView(R.layout.activity_match_video);
 
-        matchVo = (MatchVO) getIntent().getSerializableExtra("MatchVo");
-
-        isBasketball = (boolean) getIntent().getSerializableExtra("isBasketball");
-        if (matchVo.getLeague().getShortName() != null) {
-            gameTitle = matchVo.getLeague().getShortName();
-        } else {
-            gameTitle = matchVo.getLeague().getName();
-        }
-        if (matchVo.getHostTeam() != null) {
-            hostTeamName = matchVo.getHostTeam().getName();
-        } else {
-            hostTeamName = "无";
-        }
-        if (matchVo.getGuestTeam() != null) {
-            guestTeamName = matchVo.getGuestTeam().getName();
-        } else {
-            guestTeamName = "无";
-        }
+        match = (MatchVO) getIntent().getSerializableExtra("Match");
 
         init();
-
-        queryActivityVo();
-
-        queryScoreBoard();
     }
 
     @Override
@@ -284,17 +242,7 @@ public class GameVideoActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        if (resultFragment != null && resultFragment.isVisible()) {
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.remove(resultFragment);
-            fragmentTransaction.commit();
-            llBottom.setVisibility(View.VISIBLE);
-            llRight.setVisibility(View.VISIBLE);
-            tvHint.setVisibility(View.VISIBLE);
-            tvHintBandwidth.setVisibility(View.VISIBLE);
-            flResultContainer.setVisibility(View.GONE);
-        } else if (isPublish()) {
+        if (isPublish()) {
             showConfirmDialog(HINT_LEAVE);
         } else {
             finish();
@@ -308,10 +256,14 @@ public class GameVideoActivity extends BaseActivity {
         initView();
         //初始化直播
         initLiveView();
-        // 比分牌
+        //初始化logo水印
         initWaterMark();
         //初始化计时器
         initTimer();
+        //初始化比分牌
+        initScoreBoard();
+        //获取直播地址
+        queryActivityInfo();
     }
 
     /**
@@ -354,7 +306,6 @@ public class GameVideoActivity extends BaseActivity {
         ivResult = findViewById(R.id.iv_result);
         ivStatus = findViewById(R.id.iv_status);
         llBottom = findViewById(R.id.ll_bottom);
-        flResultContainer = findViewById(R.id.fl_result_container);
         tvHint = findViewById(R.id.tv_hint);
         tvHintBandwidth = findViewById(R.id.tv_hint_bandwidth);
         llRight = findViewById(R.id.ll_right);
@@ -365,18 +316,13 @@ public class GameVideoActivity extends BaseActivity {
         llHintNetwork = findViewById(R.id.ll_hint_network);
         llHintPhone = findViewById(R.id.ll_hint_phone);
         seekbarZoom.setClickable(false);
-        llHintPhone.setOnClickListener(v->{
+        llHintPhone.setOnClickListener(v -> {
             callPhone();
         });
-        if (isBasketball) {
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            params.gravity = Gravity.BOTTOM | Gravity.END;
-            params.setMargins(0, 0, 30, 30);
-            llBottom.setLayoutParams(params);
-        }
+
         ivStart.setOnClickListener(v -> {
             if (!isPublish()) {
-                if (activityVo != null) {
+                if (activity != null) {
                     showConfirmDialog(HINT_PUSH);
                 } else {
                     showToast("获取直播地址失败,请尝试重新进入该页面");
@@ -400,91 +346,11 @@ public class GameVideoActivity extends BaseActivity {
             }
         });
         ivVideoSetting.setOnClickListener(v -> showSettingMenu(ivVideoSetting));
-        if (isBasketball) {
-            ivStatus.setOnClickListener(v -> {
-                showChangeScoreDialog();
-            });
-        } else {
-            ivStatus.setVisibility(View.GONE);
-        }
+        ivStatus.setOnClickListener(v -> {
+            showStatusDialog();
+        });
         ivResult.setOnClickListener(v -> {
-            if (isBasketball) {
-                showBasketballEventDialog();
-                return;
-            }
-            if (resultFragment == null) {
-                resultFragment = new ResultFragment();
-                resultFragment.setMatchVo(matchVo);
-                resultFragment.setMatchStatusDetail(matchStatusDetail);
-                resultFragment.setBtnBackOnClick(v1 -> {
-                    FragmentManager fragmentManager = getSupportFragmentManager();
-                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                    fragmentTransaction.remove(resultFragment);
-                    fragmentTransaction.commit();
-                    llBottom.setVisibility(View.VISIBLE);
-                    llRight.setVisibility(View.VISIBLE);
-                    tvHint.setVisibility(View.VISIBLE);
-                    tvHintBandwidth.setVisibility(View.VISIBLE);
-                    flResultContainer.setVisibility(View.GONE);
-                });
-                resultFragment.setOnAddEventListener(event -> {
-                    //点击开始比赛，开始计时，从0开始
-                    if (event.getEventType() == FootballEvent.START) {
-                        startTime(0);
-                    }
-                    //点击下半场开始，开始计时，从比赛的一半时间开始
-                    if (event.getEventType() == FootballEvent.SECOND_HALF) {
-                        startTime(matchVo.getDuration() / 2);
-                    }
-                    //点击中场事件，停止计时，事件为比赛的一半
-                    if (event.getEventType() == FootballEvent.HALF_TIME) {
-                        stopTime(matchVo.getDuration() / 2);
-                    }
-                    //点击结束，停止计时
-                    if (event.getEventType() == FootballEvent.FINISH) {
-                        stopTime();
-                    }
-                });
-                resultFragment.setOnScoreAndStatusChangeListener((score, eventType) -> {
-                    if (waterMarkContainer.getScoreBoard() != null) {
-                        String[] temp = score.split("-");
-                        waterMarkContainer.getScoreBoard().setScoreLeft(temp[0]);
-                        waterMarkContainer.getScoreBoard().setScoreRight(temp[1]);
-                        if (isBasketball) {
-                            return;
-                        }
-                        // 未开始比赛
-                        if (eventType == FootballEvent.UNOPEN) {
-                            stopTime(0);
-                        }
-                        // 点击开始比赛，开始计时，从0开始
-                        if (eventType == FootballEvent.START) {
-                            startTime(0);
-                        }
-                        // 点击下半场开始，开始计时，从比赛的一半时间开始
-                        if (eventType == FootballEvent.SECOND_HALF) {
-                            startTime(matchVo.getDuration() / 2);
-                        }
-                        // 点击中场事件，停止计时，事件为比赛的一半
-                        if (eventType == FootballEvent.HALF_TIME) {
-                            stopTime(matchVo.getDuration() / 2);
-                        }
-                        // 点击结束，停止计时
-                        if (eventType == FootballEvent.FINISH) {
-                            stopTime();
-                        }
-                    }
-                });
-            }
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.add(R.id.fl_result_container, resultFragment);
-            fragmentTransaction.commit();
-            llBottom.setVisibility(View.GONE);
-            llRight.setVisibility(View.GONE);
-            tvHint.setVisibility(View.GONE);
-            tvHintBandwidth.setVisibility(View.GONE);
-            flResultContainer.setVisibility(View.VISIBLE);
+            showBasketballEventDialog();
         });
         ivAdd.setOnClickListener(v -> {
             mLFLiveView.zoom(true, 1);
@@ -514,7 +380,6 @@ public class GameVideoActivity extends BaseActivity {
     }
 
     private void initTimer() {
-        handler.sendEmptyMessage(0);
         //定时刷新
         mTimerTask = new TimerTask() {
             @Override
@@ -669,9 +534,9 @@ public class GameVideoActivity extends BaseActivity {
         }
     }
 
-    private void queryActivityVo() {
-        LiveRequest request = RetrofitManager.getInstance().getRetrofit().create(LiveRequest.class);
-        Call<ResponseEntity<ActivityVO>> response = request.getActivityVo(matchVo.getActivityId());
+    private void queryActivityInfo() {
+        LiveServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(LiveServiceProvider.class);
+        Call<ResponseEntity<ActivityVO>> response = request.getActivityVo(match.getActivityId());
         response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<ActivityVO>>() {
             @Override
             public void onRefreshTokenFail() {
@@ -680,7 +545,7 @@ public class GameVideoActivity extends BaseActivity {
 
             @Override
             public void onSuccess(ResponseEntity<ActivityVO> result) {
-                activityVo = result.getData();
+                activity = result.getData();
             }
 
             @Override
@@ -695,41 +560,10 @@ public class GameVideoActivity extends BaseActivity {
         });
     }
 
-    private void queryScoreBoard() {
-        if (isBasketball) {
-            changeScoreBoard();
-            return;
-        }
-        ScoreBoardRequest request = RetrofitManager.getInstance().getRetrofit().create(ScoreBoardRequest.class);
-        Call<ResponseEntity<List<ScoreBoard>>> response = request.getScoreboard();
-        response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<List<ScoreBoard>>>() {
-            @Override
-            public void onRefreshTokenFail() {
-                gotoLoginActivity();
-            }
-
-            @Override
-            public void onSuccess(ResponseEntity<List<ScoreBoard>> result) {
-                scoreBoardList = result.getData();
-                currentScoreBoard = scoreBoardList.get(0);
-                changeScoreBoard(currentScoreBoard);
-            }
-
-            @Override
-            public void onFail(@Nullable Response<ResponseEntity<List<ScoreBoard>>> response, @Nullable Throwable t) {
-                if (response != null) {
-                    showToast("请求比分牌失败:" + (response.body() != null ? response.body().getMessage() : ""));
-                }
-                if (t != null) {
-                    showToast("请求比分牌失败:" + t.getMessage());
-                }
-            }
-        });
-    }
 
     private void queryLiveQuality() {
-        LiveRequest request = RetrofitManager.getInstance().getRetrofit().create(LiveRequest.class);
-        Call<ResponseEntity<Integer>> response = request.quality(matchVo.getActivityId());
+        LiveServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(LiveServiceProvider.class);
+        Call<ResponseEntity<Integer>> response = request.quality(match.getActivityId());
         response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<Integer>>() {
             @Override
             public void onRefreshTokenFail() {
@@ -803,28 +637,15 @@ public class GameVideoActivity extends BaseActivity {
                             case R.id.btn_confirm:
                                 String btnText = confirmDialogTvHint.getText().toString();
                                 if (btnText.equals(HINT_PUSH)) {
-                                    Log.d(TAG, "PushStreamUrl->" + activityVo.getPushStreamUrl());
-                                    mRtmpSender.setAddress(activityVo.getPushStreamUrl());
+                                    Log.d(TAG, "PushStreamUrl->" + activity.getPushStreamUrl());
+                                    mRtmpSender.setAddress(activity.getPushStreamUrl());
                                     mRtmpSender.connect();
                                     setPublish(true);
-                                    startTime();
                                     tvHint.setText("直播中");
                                     tvHintBandwidth.setText("直播中");
                                     llHintNetwork.setVisibility(View.INVISIBLE);
-                                    switch (matchStatusDetail.getStatus()) {
-                                        case FootballEvent.UNOPEN:
-                                            stopTime(0);
-                                            break;
-                                        case FootballEvent.HALF_TIME:
-                                            stopTime(matchVo.getDuration() / 2);
-                                            break;
-                                        case FootballEvent.FINISH:
-                                            stopTime(matchVo.getDuration());
-                                            break;
-                                        default:
-                                            startTime(matchStatusDetail.getMinute());
-                                            break;
-                                    }
+                                    refreshAgainstTeamInfo(match.getAgainstTeams(), matchStatus);
+                                    reloadScoreBoard();
                                     startQueryLiveQuality();
                                 } else if (btnText.equals(HINT_LEAVE)) {
                                     finish();
@@ -918,11 +739,7 @@ public class GameVideoActivity extends BaseActivity {
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.scoreboard_setting:
-                    if (isBasketball) {
-                        showToast("暂不支持更换比分牌");
-                    } else {
-                        showChooseScoreBoardDialog();
-                    }
+                    showScoreBoardSettingDialog();
                     break;
                 case R.id.live_setting:
                     showVideoResolutionSettingDialog();
@@ -934,26 +751,25 @@ public class GameVideoActivity extends BaseActivity {
     }
 
     private void queryMatchStatusDetail() {
-        FootballRequest request = RetrofitManager.getInstance().getRetrofit().create(FootballRequest.class);
-        Call<ResponseEntity<MatchStatusDetail>> response = request.getMatchStatusDetailById(matchVo.getId());
-        response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<MatchStatusDetail>>() {
+        BasketballServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(BasketballServiceProvider.class);
+        Call<ResponseEntity<MatchStatusVO>> response = request.getMatchStatusDetailById(match.getId());
+        response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<MatchStatusVO>>() {
             @Override
             public void onRefreshTokenFail() {
                 gotoLoginActivity();
             }
 
             @Override
-            public void onSuccess(ResponseEntity<MatchStatusDetail> result) {
-                matchStatusDetail = result.getData();
+            public void onSuccess(ResponseEntity<MatchStatusVO> result) {
+                matchStatus = result.getData();
                 if (waterMarkContainer.getScoreBoard() != null) {
-                    String[] scores = matchStatusDetail.getScore().split("-");
-                    waterMarkContainer.getScoreBoard().setScoreLeft(scores[0]);
-                    waterMarkContainer.getScoreBoard().setScoreRight(scores[1]);
+                    refreshAgainstTeamInfo(match.getAgainstTeams(), matchStatus);
+                    reloadScoreBoard();
                 }
             }
 
             @Override
-            public void onFail(@Nullable Response<ResponseEntity<MatchStatusDetail>> response, @Nullable Throwable t) {
+            public void onFail(@Nullable Response<ResponseEntity<MatchStatusVO>> response, @Nullable Throwable t) {
                 if (response != null) {
                     showToast("请求失败:" + (response.body() != null ? response.body().getMessage() : ""));
                 }
@@ -964,16 +780,17 @@ public class GameVideoActivity extends BaseActivity {
         });
     }
 
-    private void showChooseScoreBoardDialog() {
+    private void showScoreBoardSettingDialog() {
         if (scoreSettingDialog == null) {
             scoreSettingDialog = DialogPlus.newDialog(this)
-                    .setContentHolder(new ViewHolder(R.layout.dialog_choose_score_board))
-                    .setGravity(Gravity.BOTTOM)
+                    .setContentHolder(new ViewHolder(R.layout.dialog_score_board_setting))
+                    .setGravity(Gravity.CENTER)
                     .setCancelable(true)
-                    .setContentBackgroundResource(R.drawable.shape_circle_bottom_popup)
+                    .setContentBackgroundResource(R.drawable.shape_circle_popup)
                     .setOnClickListener((dialog, view) -> {
                         ColorPickerDialog colorPickerDialog;
                         switch (view.getId()) {
+                            case R.id.tv_host_name:
                             case R.id.iv_host_color:
                                 colorPickerDialog = new ColorPickerDialog(GameVideoActivity.this, hostColor, "主队颜色", color -> {
                                     hostColor = color;
@@ -985,6 +802,7 @@ public class GameVideoActivity extends BaseActivity {
                                 });
                                 colorPickerDialog.show();
                                 break;
+                            case R.id.tv_guest_name:
                             case R.id.iv_guest_color:
                                 colorPickerDialog = new ColorPickerDialog(GameVideoActivity.this, guestColor, "客队颜色", color -> {
                                     guestColor = color;
@@ -1000,15 +818,6 @@ public class GameVideoActivity extends BaseActivity {
                     })
                     .setExpanded(false)
                     .create();
-            HorizontalListView listViewScoreBoard = (HorizontalListView) scoreSettingDialog.findViewById(R.id.lv_score_list);
-            ScoreBoardAdapter adapter = new ScoreBoardAdapter(this, scoreBoardList);
-            listViewScoreBoard.setAdapter(adapter);
-            listViewScoreBoard.setOnItemClickListener((parent, view, position, id) -> {
-                currentScoreBoard = scoreBoardList.get(position);
-                changeScoreBoard(currentScoreBoard);
-            });
-            adapter.notifyDataSetChanged();
-
             Switch switchLogo = (Switch) scoreSettingDialog.findViewById(R.id.switch_logo);
             Switch switchScoreboard = (Switch) scoreSettingDialog.findViewById(R.id.switch_scoreboard);
             switchLogo.setChecked(isLogoShow);
@@ -1029,132 +838,64 @@ public class GameVideoActivity extends BaseActivity {
             });
             ivHostColor = (ImageView) scoreSettingDialog.findViewById(R.id.iv_host_color);
             ivGuestColor = (ImageView) scoreSettingDialog.findViewById(R.id.iv_guest_color);
-            EditText etGameTitle = (EditText) scoreSettingDialog.findViewById(R.id.et_title);
-            etGameTitle.setText(gameTitle);
-            etGameTitle.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    gameTitle = s.toString();
-                    if (waterMarkContainer.getScoreBoard() != null) {
-                        waterMarkContainer.getScoreBoard().setTitle(gameTitle);
-                        reloadWatermark();
-                    }
-                }
-            });
-            EditText etHostTeamName = (EditText) scoreSettingDialog.findViewById(R.id.et_host_name);
-            etHostTeamName.setText(hostTeamName);
-            etHostTeamName.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    hostTeamName = s.toString();
-                    if (waterMarkContainer.getScoreBoard() != null) {
-                        waterMarkContainer.getScoreBoard().setTeamNameHost(hostTeamName);
-                        reloadWatermark();
-                    }
-                }
-            });
-            EditText etGuestTeamName = (EditText) scoreSettingDialog.findViewById(R.id.et_guest_name);
-            etGuestTeamName.setText(guestTeamName);
-            etGuestTeamName.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    guestTeamName = s.toString();
-                    if (waterMarkContainer.getScoreBoard() != null) {
-                        waterMarkContainer.getScoreBoard().setTeamNameGuest(guestTeamName);
-                        reloadWatermark();
-                    }
-                }
-            });
-            etTime = (EditText) scoreSettingDialog.findViewById(R.id.et_time);
-            etTime.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    int time;
-                    try {
-                        if (TextUtils.isEmpty(s)) {
-                            time = 0;
-                        } else {
-                            time = Integer.parseInt(s.toString().trim());
-                        }
-                        Integer status = matchStatusDetail.getStatus();
-                        if (isPublish() && status != FootballEvent.FINISH
-                                && status != FootballEvent.HALF_TIME
-                                && status != FootballEvent.UNOPEN
-                                && status != FootballEvent.PAUSE) {
-                            startTime(time);
-                        } else {
-                            stopTime(time);
-                        }
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        }
-        if (timeSecond == 0) {
-            etTime.setText("0");
-        } else {
-            etTime.setText(String.valueOf(timeSecond / 60));
+            TextView tvHostTeamName = (TextView) scoreSettingDialog.findViewById(R.id.tv_host_name);
+            tvHostTeamName.setText(hostTeamName);
+            TextView tvGuestTeamName = (TextView) scoreSettingDialog.findViewById(R.id.tv_guest_name);
+            tvGuestTeamName.setText(guestTeamName);
         }
         scoreSettingDialog.show();
     }
 
-    //换比分牌
-    private <T extends BaseScoreBoardView> void changeScoreBoard(ScoreBoard scoreBoard) {
-        //隐藏比分牌
-        if (scoreBoard == null) {
-            waterMarkContainer.hideScoreBoard();
-            return;
+    private void refreshAgainstTeamInfo(Map<Integer, MatchAgainstVO> againstTeams, MatchStatus matchStatus) {
+        hostTeamName = "无";
+        guestTeamName = "无";
+        section = 1;
+        hostScore = 0;
+        guestScore = 0;
+        if (againstTeams != null && againstTeams.size() > 0) {
+            for (Integer key : againstTeams.keySet()) {
+                //如果对阵方等于当前对阵方
+                if (matchStatus != null && matchStatus.getAgainstIndex().equals(key)) {
+                    MatchAgainstVO againstTeam = againstTeams.get(key);
+                    if (againstTeam != null && againstTeam.getHostTeam() != null) {
+                        hostTeamId = againstTeam.getHostTeam().getId();
+                        hostTeamHeadImg = againstTeam.getHostTeam().getHeadImg();
+                        if (againstTeam.getHostTeam().getShortName() != null) {
+                            hostTeamName = againstTeam.getHostTeam().getShortName();
+                        } else {
+                            hostTeamName = againstTeam.getHostTeam().getName();
+                        }
+                    }
+                    if (againstTeam != null && againstTeam.getGuestTeam() != null) {
+                        guestTeamId = againstTeam.getGuestTeam().getId();
+                        guestTeamHeadImg = againstTeam.getGuestTeam().getHeadImg();
+                        if (againstTeam.getGuestTeam().getShortName() != null) {
+                            guestTeamName = againstTeam.getGuestTeam().getShortName();
+                        } else {
+                            guestTeamName = againstTeam.getGuestTeam().getName();
+                        }
+                    }
+                    String score = "0-0";
+                    if (matchStatus.getScore() != null && matchStatus.getScore().containsKey(key)) {
+                        score = matchStatus.getScore().get(key);
+                    }
+                    String[] againstScore = score.split("-");
+                    hostScore = Integer.parseInt(againstScore[0]);
+                    guestScore = Integer.parseInt(againstScore[1]);
+                }
+            }
         }
-        BaseScoreBoardView scoreBoardWaterMarkView = new ScoreBoardView(this).initPositionWithScoreBoard(scoreBoard);
-        //删除比分牌
-        if (waterMarkContainer.getScoreBoard() != null) {
-            waterMarkContainer.removeView(waterMarkContainer.getScoreBoard());
+        if (matchStatus != null && matchStatus.getSection() != null) {
+            section = matchStatus.getSection();
         }
-        //添加比分牌
-        scoreBoardWaterMarkView.setTeamNameHost(hostTeamName);
-        scoreBoardWaterMarkView.setTeamNameGuest(guestTeamName);
-        scoreBoardWaterMarkView.setTitle(gameTitle);
-        // 设置队服颜色
-        scoreBoardWaterMarkView.setHostColor(hostColor);
-        scoreBoardWaterMarkView.setGuestColor(guestColor);
-        scoreBoardWaterMarkView.getViewTreeObserver().addOnGlobalLayoutListener(onGlobalLayoutListener);
-        waterMarkContainer.setScoreBoard(scoreBoardWaterMarkView);
+        if (matchStatus != null && matchStatus.getAgainstIndex() != null) {
+            againstIndex = matchStatus.getAgainstIndex();
+        }
     }
 
-    private <T extends BaseScoreBoardView> void changeScoreBoard() {
+    private <T extends BaseScoreBoardView> void initScoreBoard() {
+        //初始化比分牌文字
+        refreshAgainstTeamInfo(match.getAgainstTeams(), match.getStatus());
         BaseScoreBoardView scoreBoardWaterMarkView = new ScoreBoardBasketball(this);
         //删除比分牌
         if (waterMarkContainer.getScoreBoard() != null) {
@@ -1163,9 +904,9 @@ public class GameVideoActivity extends BaseActivity {
         //添加比分牌
         scoreBoardWaterMarkView.setTeamNameHost(hostTeamName);
         scoreBoardWaterMarkView.setTeamNameGuest(guestTeamName);
-        scoreBoardWaterMarkView.setScoreLeft("0");
-        scoreBoardWaterMarkView.setScoreRight("0");
-        scoreBoardWaterMarkView.setTime("1");
+        scoreBoardWaterMarkView.setScoreHost(hostScore);
+        scoreBoardWaterMarkView.setScoreGuest(guestScore);
+        scoreBoardWaterMarkView.setSection(section);
         scoreBoardWaterMarkView.getViewTreeObserver().addOnGlobalLayoutListener(onGlobalLayoutListener);
         waterMarkContainer.setScoreBoard(scoreBoardWaterMarkView);
     }
@@ -1181,6 +922,15 @@ public class GameVideoActivity extends BaseActivity {
     private void showScoreboard() {
         isScoreBoardShow = true;
         waterMarkContainer.showScoreBoard();
+        reloadWatermark();
+    }
+
+    private void reloadScoreBoard() {
+        waterMarkContainer.getScoreBoard().setTeamNameHost(hostTeamName);
+        waterMarkContainer.getScoreBoard().setTeamNameGuest(guestTeamName);
+        waterMarkContainer.getScoreBoard().setScoreHost(hostScore);
+        waterMarkContainer.getScoreBoard().setScoreGuest(guestScore);
+        waterMarkContainer.getScoreBoard().setSection(section);
         reloadWatermark();
     }
 
@@ -1243,44 +993,6 @@ public class GameVideoActivity extends BaseActivity {
         }
     }
 
-    private void startTime() {
-        if (isBasketball) {
-            return;
-        }
-        startTime(null);
-    }
-
-    private void startTime(Integer minute) {
-        if (isBasketball) {
-            return;
-        }
-        if (minute != null) {
-            timeSecond = minute * 60;
-            waterMarkContainer.getScoreBoard().setTime(String.format(Locale.getDefault(), "%02d:00", minute));
-            reloadWatermark();
-        }
-        isTimeCountRun = true;
-    }
-
-    private void stopTime() {
-        if (isBasketball) {
-            return;
-        }
-        stopTime(null);
-    }
-
-    private void stopTime(Integer minute) {
-        if (isBasketball) {
-            return;
-        }
-        if (minute != null) {
-            timeSecond = minute * 60;
-            waterMarkContainer.getScoreBoard().setTime(String.format(Locale.getDefault(), "%02d:00", minute));
-            reloadWatermark();
-        }
-        isTimeCountRun = false;
-    }
-
     private void changeVideoQuality(int quality) {
         switch (quality) {
             case Constants.VideoQuality.LOW:
@@ -1338,159 +1050,201 @@ public class GameVideoActivity extends BaseActivity {
         });
     }
 
-    private DialogPlus changeScoreDialog;
-    private EditText etScore;
-    private int eventType;
-    private RadioGroup rgStatus;
-    private RadioButton rbNotStart, rbStart, rbHalfTime, rbSecondHalf, rbFinish;
-    private boolean isQueryOrChangeMatchVo = false;
-
-    private void showChangeScoreDialog() {
-        if (changeScoreDialog == null) {
-            changeScoreDialog = DialogPlus.newDialog(this)
-                    .setContentHolder(new ViewHolder(R.layout.dialog_change_scroe))
-                    .setContentBackgroundResource(R.drawable.shape_circle_bottom_popup)
-                    .setGravity(Gravity.BOTTOM)
-                    .setCancelable(true)
-                    .setOnClickListener((dialog, view) -> {
-                        if (view.getId() == R.id.btn_confirm) {
-                            if (TextUtils.isEmpty(etScore.getText().toString().trim())) {
-                                showToast("输入的比分必须满足'X-X'格式");
-                                return;
-                            }
-                            String[] temp = etScore.getText().toString().trim().split("-");
-                            if (temp.length != 2) {
-                                showToast("输入的比分必须满足'X-X'格式");
-                                return;
-                            }
-                            try {
-                                Integer.parseInt(temp[0]);
-                                Integer.parseInt(temp[1]);
-                            } catch (NumberFormatException e) {
-                                showToast("输入的比分必须满足'X-X'格式");
-                                return;
-                            }
-
-                            int selectedId = rgStatus.getCheckedRadioButtonId();
-                            if (selectedId == -1) {
-                                showToast("请选择比赛状态");
-                                return;
-                            }
-                            switch (selectedId) {
-                                case R.id.rb_not_start:
-                                    eventType = UNOPEN;
-                                    break;
-                                case R.id.rb_start:
-                                    eventType = START;
-                                    break;
-                                case R.id.rb_half_time:
-                                    eventType = HALF_TIME;
-                                    break;
-                                case R.id.rb_second_half:
-                                    eventType = SECOND_HALF;
-                                    break;
-                                case R.id.rb_finish:
-                                    eventType = FINISH;
-                                    break;
-                            }
-                            updateMatchScoreStatus();
-                            dialog.dismiss();
+    private void showStatusDialog() {
+        currentSwitchAgainst = -1;
+        eventType = -1;
+        DialogPlus statusDialog = DialogPlus.newDialog(this)
+                .setContentHolder(new ViewHolder(R.layout.dialog_status_event_selector))
+                .setContentBackgroundResource(R.drawable.shape_circle_bottom_popup)
+                .setGravity(Gravity.BOTTOM)
+                .setCancelable(true)
+                .setOnDismissListener(dialog -> {
+                    if (eventType != -1) {
+                        showStatusDetailDialog();
+                    }
+                })
+                .setOnClickListener((dialog, view) -> {
+                    if (view instanceof LinearLayout) {
+                        switch (view.getId()) {
+                            case R.id.ll_start:
+                                eventType = START;
+                                break;
+                            case R.id.ll_change_against:
+                                eventType = SWITCH_AGAINST;
+                                break;
+                            case R.id.ll_finish:
+                                eventType = FINISH;
+                                break;
+                            case R.id.ll_next_section:
+                                eventType = NEXT_SETION;
+                                break;
+                            case R.id.ll_pre_section:
+                                eventType = PRE_SETION;
+                                break;
                         }
-                    })
-                    .setExpanded(false)
-                    .create();
-            rgStatus = (RadioGroup) changeScoreDialog.findViewById(R.id.rg_status);
-            etScore = (EditText) changeScoreDialog.findViewById(R.id.et_score);
-            rbNotStart = (RadioButton) changeScoreDialog.findViewById(R.id.rb_not_start);
-            rbStart = (RadioButton) changeScoreDialog.findViewById(R.id.rb_start);
-            rbHalfTime = (RadioButton) changeScoreDialog.findViewById(R.id.rb_half_time);
-            rbSecondHalf = (RadioButton) changeScoreDialog.findViewById(R.id.rb_second_half);
-            rbFinish = (RadioButton) changeScoreDialog.findViewById(R.id.rb_finish);
-        }
-        rgStatus.clearCheck();
-        etScore.setText(matchVo.getScore());
-        switch (matchVo.getStatus()) {
-            case UNOPEN:
-                rbNotStart.setChecked(true);
-                break;
-            case START:
-                rbStart.setChecked(true);
-                break;
-            case HALF_TIME:
-                rbHalfTime.setChecked(true);
-                break;
-            case SECOND_HALF:
-                rbSecondHalf.setChecked(true);
-                break;
-            case FINISH:
-                rbFinish.setChecked(true);
-                break;
-        }
-        FootballRequest request = RetrofitManager.getInstance().getRetrofit().create(FootballRequest.class);
-        Call<ResponseEntity<MatchStatusDetail>> response = request.getMatchStatusDetailById(matchVo.getId());
-        response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<MatchStatusDetail>>() {
-            @Override
-            public void onRefreshTokenFail() {
-                gotoLoginActivity();
-            }
-
-            @Override
-            public void onSuccess(ResponseEntity<MatchStatusDetail> result) {
-                matchStatusDetail = result.getData();
-                etScore.setText(matchStatusDetail.getScore());
-                changeScoreDialog.show();
-            }
-
-            @Override
-            public void onFail(@Nullable Response<ResponseEntity<MatchStatusDetail>> response, @Nullable Throwable t) {
-                if (response != null) {
-                    showToast("请求失败:" + (response.body() != null ? response.body().getMessage() : ""));
-                }
-                if (t != null) {
-                    showToast("网络请求失败:" + t.getMessage());
-                }
-            }
-        });
+                    }
+                    dialog.dismiss();
+                })
+                .setExpanded(false)
+                .create();
+        statusDialog.show();
     }
 
-    private synchronized void updateMatchScoreStatus() {
-        if (isQueryOrChangeMatchVo) {
+    private void showStatusDetailDialog() {
+        //获取当前对阵
+        Map<Integer, BasketballTimelineEventData> eventDataMap = BasketballTimelineEventData.statusEventDataMap;
+        if (!eventDataMap.containsKey(eventType)) {
             return;
         }
-        isQueryOrChangeMatchVo = true;
-        MatchVO paramMatchVO = new MatchVO();
-        paramMatchVO.setId(matchVo.getId());
-        paramMatchVO.setPenaltyScore(matchVo.getPenaltyScore());
-        paramMatchVO.setStatus(eventType);
-        paramMatchVO.setScore(etScore.getText().toString());
-        FootballRequest request = RetrofitManager.getInstance().getRetrofit().create(FootballRequest.class);
-        Call<ResponseEntity<Boolean>> response = request.updateMatchScoreStatus(paramMatchVO);
+        statusEventData = eventDataMap.get(eventType);
+
+        DialogPlus statusDetailDialog = DialogPlus.newDialog(this)
+                .setContentHolder(new ViewHolder(R.layout.dialog_status_event))
+                .setContentBackgroundResource(R.drawable.shape_circle_popup)
+                .setGravity(Gravity.CENTER)
+                .setCancelable(true)
+                .setOnClickListener((dialog, view) -> {
+                    switch (view.getId()) {
+                        case R.id.ll_against:
+                        case R.id.ll_against_index:
+                        case R.id.tv_host_team_name:
+                        case R.id.tv_guest_team_name:
+                        case R.id.iv_host_team_img:
+                        case R.id.iv_guest_team_img:
+                        case R.id.tv_score:
+                            if (eventType == SWITCH_AGAINST) {
+                                showChooseAgainstDialog();
+                            }
+                            break;
+                        case R.id.btn_confirm:
+                            TimeLine timeLine = new TimeLine();
+                            if (eventType == SWITCH_AGAINST) {
+                                if (currentSwitchAgainst == -1) {
+                                    showToast("请选择要切换的对阵");
+                                    return;
+                                } else {
+                                    timeLine.setAgainstIndex(currentSwitchAgainst);
+                                }
+                            } else if (eventType == NEXT_SETION || eventType == PRE_SETION) {
+                                timeLine.setAgainstIndex(againstIndex);
+                            }
+                            timeLine.setEventType(eventType);
+                            timeLine.setMatchId(match.getId());
+                            addEvent(timeLine);
+                            dialog.dismiss();
+                            break;
+                    }
+                })
+                .setExpanded(false)
+                .create();
+        String score = hostScore + "-" + guestScore;
+        ImageView statusDetailIvEvent = (ImageView) statusDetailDialog.findViewById(R.id.iv_event_ic);
+        TextView statusDetailTvEventName = (TextView) statusDetailDialog.findViewById(R.id.tv_event_name);
+        LinearLayout statusDetailLlAgainstIndex = (LinearLayout) statusDetailDialog.findViewById(R.id.ll_against_index);
+        statusDetailTvHostTeamName = (TextView) statusDetailDialog.findViewById(R.id.tv_host_team_name);
+        statusDetailTvGuestTeamName = (TextView) statusDetailDialog.findViewById(R.id.tv_guest_team_name);
+        statusDetailIvHostTeamHeadImg = (ImageView) statusDetailDialog.findViewById(R.id.iv_host_team_img);
+        statusDetailIvGuestTeamHeadImg = (ImageView) statusDetailDialog.findViewById(R.id.iv_guest_team_img);
+        statusDetailTvScore = (TextView) statusDetailDialog.findViewById(R.id.tv_score);
+        if (eventType != SWITCH_AGAINST) {
+            statusDetailLlAgainstIndex.setVisibility(View.GONE);
+        } else {
+            statusDetailLlAgainstIndex.setVisibility(View.VISIBLE);
+        }
+        statusDetailIvEvent.setBackgroundResource(statusEventData.getBackgroundResourceId());
+        statusDetailTvEventName.setText(statusEventData.getText());
+        statusDetailTvHostTeamName.setText(hostTeamName);
+        statusDetailTvGuestTeamName.setText(guestTeamName);
+        statusDetailTvScore.setText(score);
+        ImageLoader.getInstance().displayImage(hostTeamHeadImg, statusDetailIvHostTeamHeadImg, ImageLoaderUtil.getOptions());
+        ImageLoader.getInstance().displayImage(guestTeamHeadImg, statusDetailIvGuestTeamHeadImg, ImageLoaderUtil.getOptions());
+        statusDetailDialog.show();
+    }
+
+    private void showChooseAgainstDialog() {
+        List<IPickerViewData> options1Items = new ArrayList<>();
+        if (match.getAgainstTeams() != null) {
+            for (Integer key : match.getAgainstTeams().keySet()) {
+                MatchAgainstVO againstTeam = match.getAgainstTeams().get(key);
+                AgainstTeamPickerViewData pickerViewData = new AgainstTeamPickerViewData();
+                String hostName = "";
+                String guestName = "";
+                String score = "0-0";
+                if (againstTeam != null && againstTeam.getHostTeam() != null) {
+                    if (againstTeam.getHostTeam().getShortName() != null) {
+                        hostName = againstTeam.getHostTeam().getShortName();
+                    } else {
+                        hostName = againstTeam.getHostTeam().getName();
+                    }
+                    pickerViewData.setHostTeamHeadImg(againstTeam.getHostTeam().getHeadImg());
+                }
+                if (againstTeam != null && againstTeam.getGuestTeam() != null) {
+                    if (againstTeam.getGuestTeam().getShortName() != null) {
+                        guestName = againstTeam.getGuestTeam().getShortName();
+                    } else {
+                        guestName = againstTeam.getGuestTeam().getName();
+                    }
+                    pickerViewData.setGuestTeamHeadImg(againstTeam.getGuestTeam().getHeadImg());
+                }
+                if (matchStatus != null && matchStatus.getScore() != null && matchStatus.getScore().containsKey(key)) {
+                    score = matchStatus.getScore().get(key);
+                }
+                pickerViewData.setHostTeamName(hostName);
+                pickerViewData.setGuestTeamName(guestName);
+                pickerViewData.setAgainstTeam(hostName + "VS" + guestName);
+                pickerViewData.setAgainstIndex(key);
+                pickerViewData.setScore(score);
+                options1Items.add(pickerViewData);
+            }
+        }
+        OptionsPickerView<IPickerViewData> pvOptions = new OptionsPickerBuilder(this,
+                (options1, option2, options3, v) -> {
+                    AgainstTeamPickerViewData data = (AgainstTeamPickerViewData) options1Items.get(options1);
+                    currentSwitchAgainst = data.getAgainstIndex();
+                    statusDetailTvHostTeamName.setText(data.getHostTeamName());
+                    statusDetailTvGuestTeamName.setText(data.getGuestTeamName());
+                    statusDetailTvScore.setText(data.getScore());
+                    ImageLoader.getInstance().displayImage(data.getHostTeamHeadImg(), statusDetailIvHostTeamHeadImg, ImageLoaderUtil.getOptions());
+                    ImageLoader.getInstance().displayImage(data.getGuestTeamHeadImg(), statusDetailIvGuestTeamHeadImg, ImageLoaderUtil.getOptions());
+                }).build();
+        pvOptions.setPicker(options1Items);
+        pvOptions.show();
+    }
+
+    private void addEvent(TimeLine timeLine) {
+        if (timeLine == null) {
+            showToast("参数错误,请重新选择");
+            return;
+        }
+        showWaitingDialog();
+        BasketballServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(BasketballServiceProvider.class);
+        Call<ResponseEntity<Boolean>> response = request.addTimeLine(timeLine);
         response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<Boolean>>() {
             @Override
             public void onRefreshTokenFail() {
-                isQueryOrChangeMatchVo = false;
                 gotoLoginActivity();
             }
 
             @Override
             public void onSuccess(ResponseEntity<Boolean> result) {
-                isQueryOrChangeMatchVo = false;
+                dismissWaitingDialog();
+                Gson gson = new Gson();
                 if (result.getData()) {
-                    showToast("修改成功");
                     queryMatchStatusDetail();
+                    showToast("添加成功");
                 } else {
-                    showToast("修改比赛状态请求失败:" + result.getMessage());
+                    showToast("新增请求失败:" + gson.toJson(result));
                 }
             }
 
             @Override
             public void onFail(@Nullable Response<ResponseEntity<Boolean>> response, @Nullable Throwable t) {
-                isQueryOrChangeMatchVo = false;
+                dismissWaitingDialog();
                 if (response != null) {
-                    showToast("修改比赛状态请求失败:" + (response.body() != null ? response.body().getMessage() : ""));
+                    showToast("请求失败:" + (response.body() != null ? response.body().getMessage() : ""));
                 }
                 if (t != null) {
-                    showToast("修改比赛状态请求失败:" + t.getMessage());
+                    showToast("网络请求失败:" + t.getMessage());
                 }
             }
         });
@@ -1520,8 +1274,6 @@ public class GameVideoActivity extends BaseActivity {
 
     private boolean isUpdating = false;
 
-    private Integer currentSection = 1;
-
     private void showBasketballEventDialog() {
         if (basketballEventDialog == null) {
             basketballEventDialog = DialogPlus.newDialog(this)
@@ -1533,46 +1285,46 @@ public class GameVideoActivity extends BaseActivity {
                     .setOnClickListener((dialog, view) -> {
                         switch (view.getId()) {
                             case R.id.btn_host_plus1:
-                                updateMatchScore(matchVo.getHostTeamId(), 1);
+                                updateMatchScore(hostTeamId, BasketballEvent.GOAL_ONE);
                                 break;
                             case R.id.btn_host_plus2:
-                                updateMatchScore(matchVo.getHostTeamId(), 2);
+                                updateMatchScore(hostTeamId, BasketballEvent.GOAL_TWO);
                                 break;
                             case R.id.btn_host_plus3:
-                                updateMatchScore(matchVo.getHostTeamId(), 3);
+                                updateMatchScore(hostTeamId, BasketballEvent.GOAL_THREE);
                                 break;
                             case R.id.btn_host_reduce1:
-                                updateMatchScore(matchVo.getHostTeamId(), -1);
+                                updateMatchScore(hostTeamId, BasketballEvent.GOAL_ONE_REVERSE);
                                 break;
                             case R.id.btn_host_reduce2:
-                                updateMatchScore(matchVo.getHostTeamId(), -2);
+                                updateMatchScore(hostTeamId, BasketballEvent.GOAL_TWO_REVERSE);
                                 break;
                             case R.id.btn_host_reduce3:
-                                updateMatchScore(matchVo.getHostTeamId(), -3);
+                                updateMatchScore(hostTeamId, BasketballEvent.GOAL_THREE_REVERSE);
                                 break;
                             case R.id.btn_guest_plus1:
-                                updateMatchScore(matchVo.getGuestTeamId(), 1);
+                                updateMatchScore(guestTeamId, BasketballEvent.GOAL_ONE);
                                 break;
                             case R.id.btn_guest_plus2:
-                                updateMatchScore(matchVo.getGuestTeamId(), 2);
+                                updateMatchScore(guestTeamId, BasketballEvent.GOAL_TWO);
                                 break;
                             case R.id.btn_guest_plus3:
-                                updateMatchScore(matchVo.getGuestTeamId(), 3);
+                                updateMatchScore(guestTeamId, BasketballEvent.GOAL_THREE);
                                 break;
                             case R.id.btn_guest_reduce1:
-                                updateMatchScore(matchVo.getGuestTeamId(), -1);
+                                updateMatchScore(guestTeamId, BasketballEvent.GOAL_ONE_REVERSE);
                                 break;
                             case R.id.btn_guest_reduce2:
-                                updateMatchScore(matchVo.getGuestTeamId(), -2);
+                                updateMatchScore(guestTeamId, BasketballEvent.GOAL_TWO_REVERSE);
                                 break;
                             case R.id.btn_guest_reduce3:
-                                updateMatchScore(matchVo.getGuestTeamId(), -3);
+                                updateMatchScore(guestTeamId, BasketballEvent.GOAL_THREE_REVERSE);
                                 break;
                             case R.id.btn_pre_section:
-                                updateMatchSection(-1);
+                                updateMatchSection(BasketballEvent.PRE_SETION);
                                 break;
                             case R.id.btn_next_section:
-                                updateMatchSection(1);
+                                updateMatchSection(BasketballEvent.NEXT_SETION);
                                 break;
                         }
                     })
@@ -1600,23 +1352,31 @@ public class GameVideoActivity extends BaseActivity {
             btnPreSection = (Button) basketballEventDialog.findViewById(R.id.btn_pre_section);
             btnNextSection = (Button) basketballEventDialog.findViewById(R.id.btn_next_section);
         }
-        if (matchVo != null) {
-            tvHostName.setText(matchVo.getHostTeam().getName());
-            tvGuestName.setText(matchVo.getGuestTeam().getName());
+        if (match != null) {
+            tvHostName.setText(hostTeamName);
+            tvGuestName.setText(guestTeamName);
         }
         basketballEventDialog.show();
     }
 
-    private synchronized void updateMatchScore(Long teamId, Integer scoreChange) {
+    private synchronized void updateMatchScore(Long teamId, Integer eventType) {
         if (isUpdating) {
             showToast("正在操作中...");
             return;
         }
+        TimeLine timeLine = new TimeLine();
+        timeLine.setMatchId(match.getId());
+        timeLine.setTeamId(teamId);
+        timeLine.setEventType(eventType);
+        timeLine.setAgainstIndex(againstIndex);
+        timeLine.setSection(section);
+        timeLine.setRemark("1");
         isUpdating = true;
+        showWaitingDialog();
+        BasketballServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(BasketballServiceProvider.class);
+        Call<ResponseEntity<Boolean>> response = request.addTimeLine(timeLine);
         try {
-            FootballRequest request = RetrofitManager.getInstance().getRetrofit().create(FootballRequest.class);
-            Call<ResponseEntity<MatchStatusDetail>> response = request.getMatchStatusDetailById(matchVo.getId());
-            response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<MatchStatusDetail>>() {
+            response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<Boolean>>() {
                 @Override
                 public void onRefreshTokenFail() {
                     isUpdating = false;
@@ -1624,94 +1384,66 @@ public class GameVideoActivity extends BaseActivity {
                 }
 
                 @Override
-                public void onSuccess(ResponseEntity<MatchStatusDetail> result) {
+                public void onSuccess(ResponseEntity<Boolean> result) {
                     isUpdating = false;
-                    if (result.getData() != null) {
-                        String score = result.getData().getScore();
-                        String[] scores = score.split("-");
-                        Integer hostScore = Integer.parseInt(scores[0]);
-                        Integer guestScore = Integer.parseInt(scores[1]);
-                        if (teamId.equals(matchVo.getHostTeamId()) && (hostScore + scoreChange > 0)) {
-                            hostScore = hostScore + scoreChange;
-                        } else if (teamId.equals(matchVo.getGuestTeamId()) && (guestScore + scoreChange > 0)) {
-                            guestScore = guestScore + scoreChange;
-                        } else {
-                            showToast("请选择正确的比分");
-                            isUpdating = false;
-                            return;
-                        }
-                        MatchVO paramMatchVO = new MatchVO();
-                        paramMatchVO.setId(matchVo.getId());
-                        paramMatchVO.setPenaltyScore(matchVo.getPenaltyScore());
-                        paramMatchVO.setStatus(0);
-                        paramMatchVO.setScore(hostScore + "-" + guestScore);
-                        FootballRequest request = RetrofitManager.getInstance().getRetrofit().create(FootballRequest.class);
-                        Call<ResponseEntity<Boolean>> response = request.updateMatchScoreStatus(paramMatchVO);
-                        response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<Boolean>>() {
-                            @Override
-                            public void onRefreshTokenFail() {
-                                isUpdating = false;
-                                gotoLoginActivity();
-                            }
-
-                            @Override
-                            public void onSuccess(ResponseEntity<Boolean> result) {
-                                isUpdating = false;
-                                if (result.getData()) {
-                                    showToast("修改成功");
-                                    queryMatchStatusDetail();
-                                } else {
-                                    showToast("修改比赛状态请求失败:" + result.getMessage());
-                                }
-                            }
-
-                            @Override
-                            public void onFail(@Nullable Response<ResponseEntity<Boolean>> response, @Nullable Throwable t) {
-                                isUpdating = false;
-                                if (response != null) {
-                                    showToast("修改比赛状态请求失败:" + (response.body() != null ? response.body().getMessage() : ""));
-                                }
-                                if (t != null) {
-                                    showToast("修改比赛状态请求失败:" + t.getMessage());
-                                }
-                            }
-                        });
+                    dismissWaitingDialog();
+                    Gson gson = new Gson();
+                    if (result.getData()) {
+                        queryMatchStatusDetail();
+                        showToast("添加成功");
                     } else {
-                        showToast("获取比赛状态请求失败:" + result.getMessage());
+                        showToast("新增失败:" + gson.toJson(result));
                     }
                 }
 
                 @Override
-                public void onFail(@Nullable Response<ResponseEntity<MatchStatusDetail>> response, @Nullable Throwable t) {
+                public void onFail(@Nullable Response<ResponseEntity<Boolean>> response, @Nullable Throwable t) {
+                    dismissWaitingDialog();
                     isUpdating = false;
                     if (response != null) {
-                        showToast("获取比赛状态请求失败:" + (response.body() != null ? response.body().getMessage() : ""));
+                        showToast("请求失败:" + (response.body() != null ? response.body().getMessage() : ""));
                     }
                     if (t != null) {
-                        showToast("获取比赛状态请求失败:" + t.getMessage());
+                        showToast("网络请求失败:" + t.getMessage());
                     }
                 }
             });
         } catch (Exception e) {
             isUpdating = false;
-            showToast("修改失败");
+            showToast("添加失败");
         }
     }
 
-    private void updateMatchSection(Integer sectionChange) {
-        if (waterMarkContainer.getScoreBoard() != null) {
-            if (currentSection + sectionChange <= 0) {
-                currentSection = 1;
-            } else {
-                currentSection = currentSection + sectionChange;
-            }
-            waterMarkContainer.getScoreBoard().setTime(String.valueOf(currentSection));
-        }
+    private void updateMatchSection(Integer eventType) {
+        TimeLine timeLine = new TimeLine();
+        timeLine.setMatchId(match.getId());
+        timeLine.setEventType(eventType);
+        timeLine.setAgainstIndex(againstIndex);
+        addEvent(timeLine);
     }
-    private void callPhone(){
+
+    private void callPhone() {
         Intent intent = new Intent(Intent.ACTION_DIAL);
         Uri data = Uri.parse("tel:17750235615");
         intent.setData(data);
         startActivity(intent);
+    }
+
+    private WaitingDialog waitingDialog;
+
+    private void showWaitingDialog() {
+        if (waitingDialog == null) {
+            waitingDialog = new WaitingDialog(this, "");
+            waitingDialog.setCanceledOnTouchOutside(false);
+        }
+        this.runOnUiThread(() -> waitingDialog.show());
+    }
+
+    private void dismissWaitingDialog() {
+        this.runOnUiThread(() -> {
+            if (waitingDialog != null) {
+                waitingDialog.dismiss();
+            }
+        });
     }
 }

@@ -9,7 +9,7 @@ import android.widget.TextView;
 
 import com.qiezitv.R;
 import com.qiezitv.common.ImageLoaderUtil;
-import com.qiezitv.model.LeagueVO;
+import com.qiezitv.model.basketball.LeagueVO;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.text.SimpleDateFormat;

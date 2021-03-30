@@ -21,13 +21,13 @@ import com.qiezitv.common.FinishActivityManager;
 import com.qiezitv.common.StringUtil;
 import com.qiezitv.common.http.AutoRefreshTokenCallback;
 import com.qiezitv.common.http.RetrofitManager;
-import com.qiezitv.common.http.entity.ResponseEntity;
+import com.qiezitv.dto.http.ResponseEntity;
 import com.qiezitv.fragment.MatchListFragment;
-import com.qiezitv.http.request.FootballRequest;
-import com.qiezitv.model.LeagueRound;
-import com.qiezitv.model.LeagueVO;
-import com.qiezitv.model.MatchVO;
-import com.qiezitv.model.Page;
+import com.qiezitv.http.provider.BasketballServiceProvider;
+import com.qiezitv.pojo.LeagueRound;
+import com.qiezitv.model.basketball.LeagueVO;
+import com.qiezitv.model.basketball.MatchVO;
+import com.qiezitv.model.page.Page;
 import com.qiezitv.view.WaitingDialog;
 
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public class MatchActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_match);
+        setContentView(R.layout.activity_match_list);
 
         Bundle bundle = getIntent().getExtras();
         assert bundle != null;
@@ -129,9 +129,8 @@ public class MatchActivity extends BaseActivity {
 
     private void queryLeagueDetail() {
         showWaitingDialog();
-        FootballRequest request = RetrofitManager.getInstance().getRetrofit().create(FootballRequest.class);
-        Map<String, Object> queryMap = new ArrayMap<>();
-        Call<ResponseEntity<LeagueVO>> response = request.getLeagueById(leagueId, queryMap);
+        BasketballServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(BasketballServiceProvider.class);
+        Call<ResponseEntity<LeagueVO>> response = request.getLeagueById(leagueId);
         response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<LeagueVO>>() {
             @Override
             public void onRefreshTokenFail() {
@@ -152,8 +151,8 @@ public class MatchActivity extends BaseActivity {
 //                        showToast("数据发生变化，请重新进入");
 //                        finish();
 //                    } else {
-                        currentRound = getCurrentRound();
-                        queryMatchList(currentRound);
+                    currentRound = getCurrentRound();
+                    queryMatchList(currentRound);
 //                    }
                 }
             }
@@ -174,7 +173,7 @@ public class MatchActivity extends BaseActivity {
 
     private void queryMatchList(String round) {
         showWaitingDialog();
-        FootballRequest request = RetrofitManager.getInstance().getRetrofit().create(FootballRequest.class);
+        BasketballServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(BasketballServiceProvider.class);
         Map<String, Object> queryMap = new ArrayMap<>();
         queryMap.put("pageSize", 1000);
         queryMap.put("pageNum", 1);
@@ -219,7 +218,7 @@ public class MatchActivity extends BaseActivity {
         }
         for (MatchListFragment matchListFragment : tabsFragmentList) {
             if (matchListFragment.round.equalsIgnoreCase(round)) {
-                matchListFragment.setMatchVOList(dataList);
+                matchListFragment.setMatchList(dataList);
                 matchListFragment.updateView();
             }
         }
@@ -338,12 +337,13 @@ public class MatchActivity extends BaseActivity {
         if (round == null) {
             if (leagueVo.getRound() != null && leagueVo.getRound().getRounds() != null && leagueVo.getRound().getRounds().size() > 0) {
                 return leagueVo.getRound().getRounds().get(0);
-            }else{
+            } else {
                 return "第一轮";
             }
         }
         return round;
     }
+
     public List<String> getRoundString(LeagueRound rounds) {
         List<String> roundList = new ArrayList<>();
         boolean hasOpen = false;

@@ -40,18 +40,12 @@
             android:id="@+id/et_user"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:background="@drawable/edit_text_bg"
+            android:background="@drawable/layer_highlight"
             android:hint="请输入账号"
             android:inputType="text"
             android:maxLength="15"
+            android:paddingLeft="15dp"
             android:textSize="14sp" />
-
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center_vertical|right"
-            android:layout_marginRight="20dp"
-            android:src="@drawable/ic_user" />
     </FrameLayout>
 
     <FrameLayout
@@ -69,18 +63,12 @@
             android:id="@+id/et_password"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:background="@drawable/edit_text_bg"
-            android:hint="请输入账号"
+            android:background="@drawable/layer_highlight"
+            android:hint="请输入密码"
             android:inputType="textPassword"
             android:maxLength="20"
+            android:paddingLeft="15dp"
             android:textSize="14sp" />
-
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center_vertical|right"
-            android:layout_marginRight="20dp"
-            android:src="@drawable/ic_password" />
     </FrameLayout>
 
     <CheckBox
@@ -109,7 +97,8 @@
         android:layout_below="@id/cb_auto_login"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
-        android:background="@drawable/login_button_bg"
-        android:text="登录" />
+        android:background="@drawable/layer_button_bg_primary"
+        android:text="登录"
+        android:textColor="#ffffff" />
 
 </RelativeLayout>

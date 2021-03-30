@@ -23,7 +23,7 @@ public class Constants {
     /**
      * 服务器默认IP地址
      */
-    public static final String SERVER_DEFAULT_IP = "www.qiezizhibo.com";
+    public static final String SERVER_DEFAULT_IP = "basketball.qiezizhibo.com";
     /**
      * http连接超时时间
      */
@@ -60,12 +60,11 @@ public class Constants {
      */
     public static final String SP_ACCESS_TOKEN = "sp_access_token";
 
-    public static class MatchType {
-        public static final int TIME_LINE = 1;
-        public static final int STATISTIC = 2;
-        public static final int PLAYER_LIST = 3;
-        public static final int CHATTING_ROOM = 4;
-        public static final int HIGHLIGHT = 5;
+    public interface MatchType {
+        int STATISTICS = 1;
+        int PLAYRLIST = 2;
+        int CAHTTINGROOM = 3;
+        int CLIP = 4;
     }
 
     public static class VideoQuality {

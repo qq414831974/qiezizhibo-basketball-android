@@ -13,9 +13,10 @@ import com.qiezitv.R;
 import com.qiezitv.common.Constants;
 import com.qiezitv.common.SharedPreferencesUtil;
 import com.qiezitv.common.http.RetrofitManager;
-import com.qiezitv.common.http.entity.ResponseEntity;
-import com.qiezitv.http.request.AuthRequest;
-import com.qiezitv.model.AccessToken;
+import com.qiezitv.dto.AdminUserRefreshTokenRequest;
+import com.qiezitv.dto.http.ResponseEntity;
+import com.qiezitv.http.provider.AuthServiceProvider;
+import com.qiezitv.model.auth.AccessToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -87,8 +88,8 @@ public class SplashActivity extends BaseActivity {
                         new Handler().postDelayed(() -> readyGoThenKill(MainActivity.class), Constants.SPLASH_STOP_TIME);
                     } else {
                         // 尝试刷新token
-                        AuthRequest request = RetrofitManager.getInstance().getRetrofit().create(AuthRequest.class);
-                        Call<ResponseEntity<AccessToken>> response = request.refreshToken(accessToken.getRefreshToken());
+                        AuthServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(AuthServiceProvider.class);
+                        Call<ResponseEntity<AccessToken>> response = request.refreshToken(new AdminUserRefreshTokenRequest(accessToken.getRefreshToken()));
                         response.enqueue(new Callback<ResponseEntity<AccessToken>>() {
                             @Override
                             public void onResponse(@NonNull Call<ResponseEntity<AccessToken>> call, @NonNull Response<ResponseEntity<AccessToken>> response) {

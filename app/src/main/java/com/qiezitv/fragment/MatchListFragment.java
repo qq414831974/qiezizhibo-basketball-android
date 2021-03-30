@@ -9,8 +9,9 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.orhanobut.dialogplus.DialogPlus;
+import com.orhanobut.dialogplus.ViewHolder;
 import com.qiezitv.R;
-import com.qiezitv.activity.GameResultActivity;
 import com.qiezitv.activity.GameVideoActivity;
 import com.qiezitv.activity.LoginActivity;
 import com.qiezitv.activity.MainActivity;
@@ -18,13 +19,11 @@ import com.qiezitv.adapter.MatchListAdapter;
 import com.qiezitv.common.FinishActivityManager;
 import com.qiezitv.common.http.AutoRefreshTokenCallback;
 import com.qiezitv.common.http.RetrofitManager;
-import com.qiezitv.common.http.entity.ResponseEntity;
-import com.qiezitv.http.request.FootballRequest;
-import com.qiezitv.model.MatchStatusDetail;
-import com.qiezitv.model.MatchVO;
+import com.qiezitv.dto.http.ResponseEntity;
+import com.qiezitv.http.provider.BasketballServiceProvider;
+import com.qiezitv.model.basketball.MatchStatusVO;
+import com.qiezitv.model.basketball.MatchVO;
 import com.qiezitv.view.WaitingDialog;
-import com.orhanobut.dialogplus.DialogPlus;
-import com.orhanobut.dialogplus.ViewHolder;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -41,17 +40,15 @@ public class MatchListFragment extends BaseFragment {
     private MatchListAdapter adapter;
     private WaitingDialog waitingDialog;
 
-    private List<MatchVO> matchVOList;
+    private List<MatchVO> matchList;
     private DialogPlus dialog;
     private TextView dialogTvName;
     private TextView dialogTvTime;
     private TextView dialogBtnLive;
-    private TextView dialogBtnLiveBasketball;
 
-    private MatchVO matchVo;
+    private MatchVO match;
 
     private Class<?> chooseClazz;
-    private boolean isBasketball = false;
 
     public String round;
 
@@ -73,7 +70,7 @@ public class MatchListFragment extends BaseFragment {
 
     public void updateView() {
         getActivity().runOnUiThread(() -> {
-            if (matchVOList == null || matchVOList.isEmpty()) {
+            if (matchList == null || matchList.isEmpty()) {
                 lvMatchList.setVisibility(View.GONE);
                 tvNotDataHint.setVisibility(View.VISIBLE);
             } else {
@@ -81,11 +78,11 @@ public class MatchListFragment extends BaseFragment {
                 tvNotDataHint.setVisibility(View.GONE);
 
                 if (adapter == null) {
-                    adapter = new MatchListAdapter(getContext(), matchVOList);
+                    adapter = new MatchListAdapter(getContext(), matchList);
                     lvMatchList.setAdapter(adapter);
                     lvMatchList.setOnItemClickListener((parent, view, position, id) -> {
-                        matchVo = matchVOList.get(position);
-                        Log.d(TAG, "matchVo.id:" + matchVo.getId());
+                        match = matchList.get(position);
+                        Log.d(TAG, "matchVo.id:" + match.getId());
                         showDialog();
                     });
                 }
@@ -94,8 +91,8 @@ public class MatchListFragment extends BaseFragment {
         });
     }
 
-    public void setMatchVOList(List<MatchVO> matchVOList) {
-        this.matchVOList = matchVOList;
+    public void setMatchList(List<MatchVO> matchList) {
+        this.matchList = matchList;
     }
 
     private void showDialog() {
@@ -108,12 +105,9 @@ public class MatchListFragment extends BaseFragment {
                     .setOnDismissListener(dialog -> {
                         if (chooseClazz != null) {
                             Bundle bundle = new Bundle();
-                            bundle.putSerializable("MatchVo", matchVo);
-                            bundle.putSerializable("isBasketball", isBasketball);
+                            bundle.putSerializable("Match", match);
                             if (chooseClazz == GameVideoActivity.class) {
                                 readyGo(GameVideoActivity.class, bundle);
-                            } else {
-                                queryMatchStatusDetailByIdAndJump(GameResultActivity.class);
                             }
                         }
                     })
@@ -123,14 +117,6 @@ public class MatchListFragment extends BaseFragment {
                             switch (view.getId()) {
                                 case R.id.btn_live:
                                     chooseClazz = GameVideoActivity.class;
-                                    isBasketball = false;
-                                    break;
-                                case R.id.btn_live_basketball:
-                                    chooseClazz = GameVideoActivity.class;
-                                    isBasketball = true;
-                                    break;
-                                case R.id.btn_count:
-                                    chooseClazz = GameResultActivity.class;
                                     break;
                             }
                         }
@@ -140,18 +126,15 @@ public class MatchListFragment extends BaseFragment {
             dialogTvName = (TextView) dialog.findViewById(R.id.tv_name);
             dialogTvTime = (TextView) dialog.findViewById(R.id.tv_time);
             dialogBtnLive = (Button) dialog.findViewById(R.id.btn_live);
-            dialogBtnLiveBasketball = (Button) dialog.findViewById(R.id.btn_live_basketball);
         }
-        if (!matchVo.isAllowStreaming()) {
+        if (!match.isAllowStreaming()) {
             dialogBtnLive.setVisibility(View.INVISIBLE);
-            dialogBtnLiveBasketball.setVisibility(View.INVISIBLE);
         } else {
             dialogBtnLive.setVisibility(View.VISIBLE);
-            dialogBtnLiveBasketball.setVisibility(View.VISIBLE);
         }
-        dialogTvName.setText(matchVo.getName());
+        dialogTvName.setText(match.getName());
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
-        dialogTvTime.setText(simpleDateFormat.format(matchVo.getStartTime()));
+        dialogTvTime.setText(simpleDateFormat.format(match.getStartTime()));
         dialog.show();
     }
 
@@ -167,46 +150,6 @@ public class MatchListFragment extends BaseFragment {
         getActivity().runOnUiThread(() -> {
             if (waitingDialog != null) {
                 waitingDialog.dismiss();
-            }
-        });
-    }
-
-    private void queryMatchStatusDetailByIdAndJump(Class<?> clazz) {
-        showWaitingDialog();
-        FootballRequest request = RetrofitManager.getInstance().getRetrofit().create(FootballRequest.class);
-        Call<ResponseEntity<MatchStatusDetail>> response = request.getMatchStatusDetailById(matchVo.getId());
-        response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<MatchStatusDetail>>() {
-            @Override
-            public void onRefreshTokenFail() {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        dismissWaitingDialog();
-                        showToast("授权失效，重新登录");
-                        readyGo(LoginActivity.class);
-                        FinishActivityManager.getManager().finishActivity(MainActivity.class);
-                        getActivity().finish();
-                    });
-                }
-            }
-
-            @Override
-            public void onSuccess(ResponseEntity<MatchStatusDetail> result) {
-                dismissWaitingDialog();
-                Bundle bundle = new Bundle();
-                bundle.putSerializable("MatchVo", matchVo);
-                bundle.putSerializable("MatchStatusDetailVo", result.getData());
-                readyGo(clazz, bundle);
-            }
-
-            @Override
-            public void onFail(@Nullable Response<ResponseEntity<MatchStatusDetail>> response, @Nullable Throwable t) {
-                dismissWaitingDialog();
-                if (response != null) {
-                    showToast("请求失败:" + (response.body() != null ? response.body().getMessage() : ""));
-                }
-                if (t != null) {
-                    showToast("网络请求失败:" + t.getMessage());
-                }
             }
         });
     }

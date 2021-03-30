@@ -5,11 +5,13 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.support.v4.graphics.ColorUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.qiezitv.R;
@@ -18,15 +20,14 @@ import com.qiezitv.R;
 public abstract class BaseScoreBoardView extends FrameLayout {
 
     protected Context context;
-    protected TextView tvTitle;
-    protected TextView tvTeamNameLeft;
-    protected TextView tvTeamNameRight;
-    protected TextView tvScoreLeft;
-    protected TextView tvScoreRight;
-    protected TextView tvTime;
+    protected TextView tvTeamNameHost;
+    protected TextView tvTeamNameGuest;
+    protected TextView tvScoreHost;
+    protected TextView tvScoreGuest;
+    protected TextView tvSection;
     protected ImageView ivScoreBoard;
-    protected ImageView ivHostColor;
-    protected ImageView ivGuestColor;
+    protected LinearLayout llHostColor;
+    protected LinearLayout llGuestColor;
 
     public BaseScoreBoardView(Context context, int resource) {
         super(context);
@@ -37,84 +38,103 @@ public abstract class BaseScoreBoardView extends FrameLayout {
     private void init(Context context, int resource) {
         View view = LayoutInflater.from(context).inflate(resource, this, true);
         ivScoreBoard = view.findViewById(R.id.iv_scoreboard);
-        tvTitle = view.findViewById(R.id.tv_title);
-        tvTeamNameLeft = view.findViewById(R.id.tv_team_name_left);
-        tvTeamNameRight = view.findViewById(R.id.tv_team_name_right);
-        tvScoreLeft = view.findViewById(R.id.tv_score_left);
-        tvScoreRight = view.findViewById(R.id.tv_score_right);
-        tvTime = view.findViewById(R.id.tv_time);
-        ivHostColor = view.findViewById(R.id.iv_host_color);
-        ivGuestColor = view.findViewById(R.id.iv_guest_color);
-    }
-
-    public void setTitle(String title) {
-        if (tvTitle == null) {
-            return;
-        }
-        if (title != null && title.length() > 12) {
-            float textsize = tvTeamNameLeft.getTextSize() - (title.length() - 12) * 2.5f;
-            tvTitle.setTextSize(TypedValue.COMPLEX_UNIT_PX, 28);
-        } else {
-            tvTitle.setTextSize(TypedValue.COMPLEX_UNIT_PX, 33);
-        }
-        tvTitle.setText(title);
+        tvTeamNameHost = view.findViewById(R.id.tv_team_name_left);
+        tvTeamNameGuest = view.findViewById(R.id.tv_team_name_right);
+        tvScoreHost = view.findViewById(R.id.tv_score_host);
+        tvScoreGuest = view.findViewById(R.id.tv_score_guest);
+        tvSection = view.findViewById(R.id.tv_section);
+        llHostColor = view.findViewById(R.id.ll_host_color);
+        llGuestColor = view.findViewById(R.id.ll_guest_color);
     }
 
     public void setTeamNameHost(String teamName) {
-        if (tvTeamNameLeft == null) {
+        if (tvTeamNameHost == null) {
             return;
         }
         if (teamName != null && teamName.length() > 9) {
-            float textsize = tvTeamNameLeft.getTextSize() - (teamName.length() - 9) * 2.5f;
-            tvTeamNameLeft.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
+            float textsize = tvTeamNameHost.getTextSize() - (teamName.length() - 9) * 2.5f;
+            tvTeamNameHost.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
         }
-        tvTeamNameLeft.setText(teamName);
+        tvTeamNameHost.setText(teamName);
     }
 
     public void setTeamNameGuest(String teamName) {
-        if (tvTeamNameRight == null) {
+        if (tvTeamNameGuest == null) {
             return;
         }
         if (teamName != null && teamName.length() > 9) {
-            float textsize = tvTeamNameRight.getTextSize() - (teamName.length() - 9) * 2.5f;
-            tvTeamNameRight.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
+            float textsize = tvTeamNameGuest.getTextSize() - (teamName.length() - 9) * 2.5f;
+            tvTeamNameGuest.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
         }
-        tvTeamNameRight.setText(teamName);
+        tvTeamNameGuest.setText(teamName);
     }
 
-    public void setScoreLeft(String score) {
-        if (tvScoreLeft == null) {
+    public void setScoreHost(String score) {
+        if (tvScoreHost == null) {
             return;
         }
-        tvScoreLeft.setText(score);
+        tvScoreHost.setText(score);
     }
 
-    public void setScoreRight(String score) {
-        if (tvScoreRight == null) {
+    public void setScoreHost(Integer score) {
+        if (tvScoreHost == null) {
             return;
         }
-        tvScoreRight.setText(score);
+        tvScoreHost.setText(String.valueOf(score));
     }
 
-    public void setTime(String time) {
-        if (tvTime == null) {
+    public void setScoreGuest(String score) {
+        if (tvScoreGuest == null) {
             return;
         }
-        tvTime.setText(time);
+        tvScoreGuest.setText(score);
+    }
+
+    public void setScoreGuest(Integer score) {
+        if (tvScoreGuest == null) {
+            return;
+        }
+        tvScoreGuest.setText(String.valueOf(score));
+    }
+
+    public void setSection(String section) {
+        if (tvSection == null) {
+            return;
+        }
+        tvSection.setText(section);
+    }
+
+    public void setSection(Integer section) {
+        if (tvSection == null) {
+            return;
+        }
+        tvSection.setText(String.valueOf(section));
     }
 
     public void setHostColor(int color) {
-        if (ivHostColor == null) {
+        if (llHostColor == null) {
             return;
         }
-        ivHostColor.setColorFilter(color);
+        //亮色
+        if (ColorUtils.calculateLuminance(color) >= 0.5) {
+            tvTeamNameHost.setTextColor(Color.BLACK);
+        }else{
+            tvTeamNameHost.setTextColor(Color.WHITE);
+        }
+        llHostColor.setBackgroundColor(color);
     }
 
     public void setGuestColor(int color) {
-        if (ivGuestColor == null) {
+        if (llGuestColor == null) {
             return;
         }
-        ivGuestColor.setColorFilter(color);
+        //暗色
+        if (ColorUtils.calculateLuminance(color) >= 0.5) {
+            tvTeamNameGuest.setTextColor(Color.BLACK);
+        }else{
+            tvTeamNameGuest.setTextColor(Color.WHITE);
+        }
+        llGuestColor.setBackgroundColor(color);
     }
 
     public Bitmap getBitmap() {

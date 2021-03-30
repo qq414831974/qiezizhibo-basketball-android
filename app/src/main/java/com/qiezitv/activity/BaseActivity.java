@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.view.Gravity;
 import android.view.Window;
 import android.widget.Toast;
 
@@ -73,7 +74,9 @@ public class BaseActivity extends FragmentActivity {
      * @param msg 内容
      */
     public void showToast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+        Toast toast = Toast.makeText(this, msg, Toast.LENGTH_LONG);
+        toast.setGravity(Gravity.CENTER, 0, 0);
+        toast.show();
     }
 
     /**
