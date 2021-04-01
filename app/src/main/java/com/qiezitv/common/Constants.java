@@ -78,4 +78,10 @@ public class Constants {
         public static final int BAD = 1;
         public static final int NOTBAD = 2;
     }
+    public interface LeagueRuleType {
+        int TYPE_XIAO_LANQIU = 1;
+        int TYPE_1_x_1 = 2;
+        int TYPE_3_x_3 = 3;
+        int TYPE_5_x_5 = 4;
+    }
 }

@@ -45,7 +45,6 @@ import com.qiezitv.http.provider.BasketballServiceProvider;
 import com.qiezitv.http.provider.LiveServiceProvider;
 import com.qiezitv.model.activity.ActivityVO;
 import com.qiezitv.model.basketball.MatchStatus;
-import com.qiezitv.model.basketball.MatchStatusVO;
 import com.qiezitv.model.basketball.MatchVO;
 import com.qiezitv.model.basketball.TimeLine;
 import com.qiezitv.pojo.AgainstTeamPickerViewData;
@@ -134,7 +133,7 @@ public class GameVideoActivity extends BaseActivity {
     private int section, againstIndex, hostScore, guestScore;
 
     private MatchVO match;
-    private MatchStatusVO matchStatus;
+    private MatchStatus matchStatus;
     private ActivityVO activity;
 
     private Integer liveQuality;
@@ -367,7 +366,10 @@ public class GameVideoActivity extends BaseActivity {
         //init logo
         ImageView logoWaterMarkView = new ImageView(this);
         logoWaterMarkView.setImageResource(R.drawable.ic_logo_horizontal);
-        FrameLayout.LayoutParams logoLp = new FrameLayout.LayoutParams(mVideoConfiguration.width / 6, (int) (mVideoConfiguration.height / 6 / 2.818));
+        logoWaterMarkView.setAdjustViewBounds(true);
+        logoWaterMarkView.setMaxWidth(mVideoConfiguration.width / 6);
+        logoWaterMarkView.setMaxHeight((int) (mVideoConfiguration.width / 6 / 2.818));
+        FrameLayout.LayoutParams logoLp = new FrameLayout.LayoutParams(mVideoConfiguration.width / 6, (int) (mVideoConfiguration.width / 6 / 2.818));
         logoLp.leftMargin = (int) (mVideoConfiguration.width * 0.0214);
         logoLp.topMargin = (int) (mVideoConfiguration.height * 0.023);
         logoWaterMarkView.setLayoutParams(logoLp);
@@ -752,15 +754,15 @@ public class GameVideoActivity extends BaseActivity {
 
     private void queryMatchStatusDetail() {
         BasketballServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(BasketballServiceProvider.class);
-        Call<ResponseEntity<MatchStatusVO>> response = request.getMatchStatusDetailById(match.getId());
-        response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<MatchStatusVO>>() {
+        Call<ResponseEntity<MatchStatus>> response = request.getMatchStatusDetailById(match.getId());
+        response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<MatchStatus>>() {
             @Override
             public void onRefreshTokenFail() {
                 gotoLoginActivity();
             }
 
             @Override
-            public void onSuccess(ResponseEntity<MatchStatusVO> result) {
+            public void onSuccess(ResponseEntity<MatchStatus> result) {
                 matchStatus = result.getData();
                 if (waterMarkContainer.getScoreBoard() != null) {
                     refreshAgainstTeamInfo(match.getAgainstTeams(), matchStatus);
@@ -769,7 +771,7 @@ public class GameVideoActivity extends BaseActivity {
             }
 
             @Override
-            public void onFail(@Nullable Response<ResponseEntity<MatchStatusVO>> response, @Nullable Throwable t) {
+            public void onFail(@Nullable Response<ResponseEntity<MatchStatus>> response, @Nullable Throwable t) {
                 if (response != null) {
                     showToast("请求失败:" + (response.body() != null ? response.body().getMessage() : ""));
                 }
@@ -908,6 +910,11 @@ public class GameVideoActivity extends BaseActivity {
         scoreBoardWaterMarkView.setScoreGuest(guestScore);
         scoreBoardWaterMarkView.setSection(section);
         scoreBoardWaterMarkView.getViewTreeObserver().addOnGlobalLayoutListener(onGlobalLayoutListener);
+        if (match.getLeague() != null && (match.getLeague().getRuleType() == Constants.LeagueRuleType.TYPE_1_x_1 || match.getLeague().getRuleType() == Constants.LeagueRuleType.TYPE_3_x_3)) {
+            scoreBoardWaterMarkView.showLogoMask();
+        }else{
+            scoreBoardWaterMarkView.hideLogoMask();
+        }
         waterMarkContainer.setScoreBoard(scoreBoardWaterMarkView);
     }
 

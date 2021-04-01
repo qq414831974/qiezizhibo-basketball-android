@@ -2,7 +2,7 @@ package com.qiezitv.http.provider;
 
 import com.qiezitv.dto.http.ResponseEntity;
 import com.qiezitv.model.basketball.LeagueVO;
-import com.qiezitv.model.basketball.MatchStatusVO;
+import com.qiezitv.model.basketball.MatchStatus;
 import com.qiezitv.model.basketball.MatchVO;
 import com.qiezitv.model.page.Page;
 import com.qiezitv.model.basketball.TimeLine;
@@ -67,7 +67,7 @@ public interface BasketballServiceProvider {
      * @return
      */
     @GET("/service-admin/basketball/timeline/status")
-    Call<ResponseEntity<MatchStatusVO>> getMatchStatusDetailById(@Query("matchId") Long matchId);
+    Call<ResponseEntity<MatchStatus>> getMatchStatusDetailById(@Query("matchId") Long matchId);
 
 
     /**

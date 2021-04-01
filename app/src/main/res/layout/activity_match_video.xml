@@ -43,7 +43,7 @@
             android:background="@color/btn_background_transparent_color"
             android:padding="10dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_result_start"
+            android:src="@drawable/ic_result_ball"
             app:riv_corner_radius="20dp"
             app:riv_mutate_background="true" />
 

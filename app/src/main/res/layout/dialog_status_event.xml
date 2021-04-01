@@ -19,7 +19,7 @@
             android:id="@+id/iv_event_ic"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="@drawable/ic_result_start" />
+            android:background="@drawable/ic_result_ball" />
 
         <TextView
             android:id="@+id/tv_event_name"
@@ -62,7 +62,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginRight="10dp"
                     android:gravity="center"
-                    android:text="延平足球"
+                    android:text="足球足球足球"
+                    android:maxWidth="90dp"
                     android:textSize="14sp" />
 
                 <ImageView
@@ -93,7 +94,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="10dp"
                     android:gravity="center"
-                    android:text="延平足球"
+                    android:text="足球足球足球"
+                    android:maxWidth="90dp"
                     android:textSize="14sp" />
 
             </LinearLayout>

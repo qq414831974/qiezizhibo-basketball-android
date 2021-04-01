@@ -44,7 +44,7 @@ public class BasketballTimelineEventData {
 
     public static Map<Integer, BasketballTimelineEventData> statusEventDataMap = new HashMap<Integer, BasketballTimelineEventData>() {
         {
-            put(START, new BasketballTimelineEventData(R.drawable.ic_result_start, "比赛开始"));
+            put(START, new BasketballTimelineEventData(R.drawable.ic_result_ball, "比赛开始"));
             put(NEXT_SETION, new BasketballTimelineEventData(R.drawable.ic_result_calendar, "下一节"));
             put(PRE_SETION, new BasketballTimelineEventData(R.drawable.ic_result_calendar, "上一节"));
             put(SWITCH_AGAINST, new BasketballTimelineEventData(R.drawable.ic_result_vest, "切换对阵"));

@@ -1,7 +1,6 @@
 package com.qiezitv.fragment;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -13,24 +12,13 @@ import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.ViewHolder;
 import com.qiezitv.R;
 import com.qiezitv.activity.GameVideoActivity;
-import com.qiezitv.activity.LoginActivity;
-import com.qiezitv.activity.MainActivity;
 import com.qiezitv.adapter.MatchListAdapter;
-import com.qiezitv.common.FinishActivityManager;
-import com.qiezitv.common.http.AutoRefreshTokenCallback;
-import com.qiezitv.common.http.RetrofitManager;
-import com.qiezitv.dto.http.ResponseEntity;
-import com.qiezitv.http.provider.BasketballServiceProvider;
-import com.qiezitv.model.basketball.MatchStatusVO;
 import com.qiezitv.model.basketball.MatchVO;
 import com.qiezitv.view.WaitingDialog;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
-
-import retrofit2.Call;
-import retrofit2.Response;
 
 public class MatchListFragment extends BaseFragment {
     private static final String TAG = MatchListFragment.class.getSimpleName();

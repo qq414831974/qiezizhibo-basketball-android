@@ -28,6 +28,7 @@ public abstract class BaseScoreBoardView extends FrameLayout {
     protected ImageView ivScoreBoard;
     protected LinearLayout llHostColor;
     protected LinearLayout llGuestColor;
+    protected ImageView ivLogoMask;
 
     public BaseScoreBoardView(Context context, int resource) {
         super(context);
@@ -45,6 +46,7 @@ public abstract class BaseScoreBoardView extends FrameLayout {
         tvSection = view.findViewById(R.id.tv_section);
         llHostColor = view.findViewById(R.id.ll_host_color);
         llGuestColor = view.findViewById(R.id.ll_guest_color);
+        ivLogoMask = view.findViewById(R.id.iv_scoreboard_logo_mask);
     }
 
     public void setTeamNameHost(String teamName) {
@@ -59,7 +61,6 @@ public abstract class BaseScoreBoardView extends FrameLayout {
     }
 
     public void setTeamNameGuest(String teamName) {
-        teamName = "测试测试测试测试";
         if (tvTeamNameGuest == null) {
             return;
         }
@@ -119,7 +120,7 @@ public abstract class BaseScoreBoardView extends FrameLayout {
         //亮色
         if (ColorUtils.calculateLuminance(color) >= 0.5) {
             tvTeamNameHost.setTextColor(Color.BLACK);
-        }else{
+        } else {
             tvTeamNameHost.setTextColor(Color.WHITE);
         }
         llHostColor.setBackgroundColor(color);
@@ -132,10 +133,18 @@ public abstract class BaseScoreBoardView extends FrameLayout {
         //暗色
         if (ColorUtils.calculateLuminance(color) >= 0.5) {
             tvTeamNameGuest.setTextColor(Color.BLACK);
-        }else{
+        } else {
             tvTeamNameGuest.setTextColor(Color.WHITE);
         }
         llGuestColor.setBackgroundColor(color);
+    }
+
+    public void showLogoMask() {
+        ivLogoMask.setVisibility(VISIBLE);
+    }
+
+    public void hideLogoMask() {
+        ivLogoMask.setVisibility(GONE);
     }
 
     public Bitmap getBitmap() {
