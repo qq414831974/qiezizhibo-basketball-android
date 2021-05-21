@@ -122,6 +122,7 @@ public class GameVideoActivity extends BaseActivity {
     private boolean isLogoShow = true;
     private float brightness = 1.0f;
     private boolean isAutoFocus = false;
+    private boolean isPushRetry = true;
 
     // 设置比分牌对话框
     private DialogPlus scoreSettingDialog;
@@ -368,8 +369,8 @@ public class GameVideoActivity extends BaseActivity {
         logoWaterMarkView.setImageResource(R.drawable.ic_logo_horizontal);
         logoWaterMarkView.setAdjustViewBounds(true);
         logoWaterMarkView.setMaxWidth(mVideoConfiguration.width / 6);
-        logoWaterMarkView.setMaxHeight((int) (mVideoConfiguration.width / 6 / 2.818));
-        FrameLayout.LayoutParams logoLp = new FrameLayout.LayoutParams(mVideoConfiguration.width / 6, (int) (mVideoConfiguration.width / 6 / 2.818));
+        logoWaterMarkView.setMaxHeight((int) (mVideoConfiguration.width / 6 / 2));
+        FrameLayout.LayoutParams logoLp = new FrameLayout.LayoutParams(mVideoConfiguration.width / 6, (int) (mVideoConfiguration.width / 6 / 2));
         logoLp.leftMargin = (int) (mVideoConfiguration.width * 0.0214);
         logoLp.topMargin = (int) (mVideoConfiguration.height * 0.023);
         logoWaterMarkView.setLayoutParams(logoLp);
@@ -564,6 +565,9 @@ public class GameVideoActivity extends BaseActivity {
 
 
     private void queryLiveQuality() {
+        if (isPushRetry) {
+            return;
+        }
         LiveServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(LiveServiceProvider.class);
         Call<ResponseEntity<Integer>> response = request.quality(match.getActivityId());
         response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<Integer>>() {
@@ -729,6 +733,9 @@ public class GameVideoActivity extends BaseActivity {
             Switch switchAutoFocus = (Switch) videoSettingDialog.findViewById(R.id.switch_autoFocus);
             switchAutoFocus.setChecked(isAutoFocus);
             switchAutoFocus.setOnCheckedChangeListener((compoundButton, b) -> setAutoFocus(b));
+            Switch switchPushRetry = (Switch) videoSettingDialog.findViewById(R.id.switch_pushRetry);
+            switchPushRetry.setChecked(isPushRetry);
+            switchPushRetry.setOnCheckedChangeListener((compoundButton, b) -> setPushRetry(b));
         }
 
         videoSettingDialog.show();
@@ -912,7 +919,7 @@ public class GameVideoActivity extends BaseActivity {
         scoreBoardWaterMarkView.getViewTreeObserver().addOnGlobalLayoutListener(onGlobalLayoutListener);
         if (match.getLeague() != null && (match.getLeague().getRuleType() == Constants.LeagueRuleType.TYPE_1_x_1 || match.getLeague().getRuleType() == Constants.LeagueRuleType.TYPE_3_x_3)) {
             scoreBoardWaterMarkView.showLogoMask();
-        }else{
+        } else {
             scoreBoardWaterMarkView.hideLogoMask();
         }
         waterMarkContainer.setScoreBoard(scoreBoardWaterMarkView);
@@ -1045,6 +1052,11 @@ public class GameVideoActivity extends BaseActivity {
     private void setAutoFocus(boolean autoFocus) {
         isAutoFocus = !autoFocus;
         mLFLiveView.switchFocusMode();
+    }
+
+    private void setPushRetry(boolean pushRetry) {
+        isPushRetry = !pushRetry;
+        pushRetryTimes = 0;
     }
 
     private void gotoLoginActivity() {

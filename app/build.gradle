@@ -62,6 +62,7 @@ dependencies {
     implementation 'com.orhanobut:dialogplus:1.11@aar'
     implementation 'com.contrarywind:Android-PickerView:4.1.9'
     implementation 'com.makeramen:roundedimageview:2.3.0'
+    implementation 'com.wanjian:cockroach:0.0.5'
     compileOnly "org.projectlombok:lombok:1.18.16"
     annotationProcessor 'org.projectlombok:lombok:1.18.16'
 //    implementation 'com.afollestad.material-dialogs:bottomsheets:3.2.1'

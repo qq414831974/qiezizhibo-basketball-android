@@ -1,19 +1,39 @@
 package com.qiezitv;
 
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.qiezitv.common.Constants;
 import com.qiezitv.common.ImageLoaderUtil;
 import com.qiezitv.common.SharedPreferencesUtil;
-import com.qiezitv.exception.ExceptionHandler;
 import com.nostra13.universalimageloader.cache.memory.impl.UsingFreqLimitedMemoryCache;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
+import com.qiezitv.common.http.AutoRefreshTokenCallback;
+import com.qiezitv.common.http.RetrofitManager;
+import com.qiezitv.dto.http.ResponseEntity;
+import com.qiezitv.http.provider.SysLogServiceProvider;
+import com.wanjian.cockroach.Cockroach;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Response;
 
 public class Application extends android.app.Application {
     private static final String TAG = Application.class.getSimpleName();
+    private Map<String, String> infos = new HashMap<String, String>();
 
     @Override
     public void onCreate() {
@@ -43,14 +63,88 @@ public class Application extends android.app.Application {
         ImageLoader.getInstance().init(config);
         ImageLoaderUtil.init();
 
-//        initCrashHandler();
+        initCrashHandler();
     }
 
     private void initCrashHandler() {
-        //ExceptionHander的使用
-        ExceptionHandler.install((thread, throwable) -> {
-            if (throwable != null) {
-                Log.e("060ExceptionHandler===", throwable.getMessage() + "");
+        Cockroach.install((thread, throwable) -> {
+            collectDeviceInfo(this);
+            uploadSyslog(crashInfo2String(throwable));
+        });
+    }
+
+    /**
+     * 收集设备参数信息
+     *
+     * @param ctx
+     */
+    public void collectDeviceInfo(Context ctx) {
+        try {
+            PackageManager pm = ctx.getPackageManager();
+            PackageInfo pi = pm.getPackageInfo(ctx.getPackageName(), PackageManager.GET_ACTIVITIES);
+            if (pi != null) {
+                String versionName = pi.versionName == null ? "null" : pi.versionName;
+                String versionCode = pi.versionCode + "";
+                infos.put("versionName", versionName);
+                infos.put("versionCode", versionCode);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "an error occured when collect package info", e);
+        }
+        Field[] fields = Build.class.getDeclaredFields();
+        for (Field field : fields) {
+            try {
+                field.setAccessible(true);
+                infos.put(field.getName(), field.get(null).toString());
+                Log.d(TAG, field.getName() + " : " + field.get(null));
+            } catch (Exception e) {
+                Log.e(TAG, "an error occured when collect crash info", e);
+            }
+        }
+    }
+
+    private String crashInfo2String(Throwable ex) {
+
+        StringBuffer sb = new StringBuffer();
+        for (Map.Entry<String, String> entry : infos.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            sb.append(key + "=" + value + "\n");
+        }
+
+        Writer writer = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(writer);
+        ex.printStackTrace(printWriter);
+        Throwable cause = ex.getCause();
+        while (cause != null) {
+            cause.printStackTrace(printWriter);
+            cause = cause.getCause();
+        }
+        printWriter.close();
+        String result = writer.toString();
+        sb.append(result);
+        return sb.toString();
+    }
+
+    private void uploadSyslog(String errorString) {
+        SysLogServiceProvider request = RetrofitManager.getInstance().getRetrofit().create(SysLogServiceProvider.class);
+        Map<String, String> map = new HashMap<>();
+        map.put("content", errorString);
+        Call<ResponseEntity<Boolean>> response = request.addSyslog(map);
+        response.enqueue(new AutoRefreshTokenCallback<ResponseEntity<Boolean>>() {
+            @Override
+            public void onRefreshTokenFail() {
+                System.out.println(errorString);
+            }
+
+            @Override
+            public void onSuccess(ResponseEntity<Boolean> result) {
+                System.out.println(result);
+            }
+
+            @Override
+            public void onFail(@Nullable Response<ResponseEntity<Boolean>> response, @Nullable Throwable t) {
+                System.out.println(response);
             }
         });
     }
