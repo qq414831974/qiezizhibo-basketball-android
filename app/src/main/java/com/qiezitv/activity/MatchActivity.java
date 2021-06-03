@@ -307,7 +307,7 @@ public class MatchActivity extends BaseActivity {
 
     private void dismissWaitingDialog() {
         runOnUiThread(() -> {
-            if (waitingDialog != null) {
+            if (waitingDialog != null && !isDestroyed()) {
                 waitingDialog.dismiss();
             }
         });

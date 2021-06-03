@@ -81,7 +81,11 @@ public class LoginActivity extends BaseActivity {
             response.enqueue(new Callback<ResponseEntity<AccessToken>>() {
                 @Override
                 public void onResponse(Call<ResponseEntity<AccessToken>> call, Response<ResponseEntity<AccessToken>> response) {
-                    runOnUiThread(() -> waitingDialog.dismiss());
+                    runOnUiThread(() -> {
+                        if (waitingDialog != null && !isDestroyed()) {
+                            waitingDialog.dismiss();
+                        }
+                    });
                     Gson gson = new Gson();
                     if (response.code() == 200) {
                         ResponseEntity<AccessToken> result = response.body();
@@ -110,7 +114,11 @@ public class LoginActivity extends BaseActivity {
 
                 @Override
                 public void onFailure(Call<ResponseEntity<AccessToken>> call, Throwable t) {
-                    runOnUiThread(() -> waitingDialog.dismiss());
+                    runOnUiThread(() -> {
+                        if (waitingDialog != null && !isDestroyed()) {
+                            waitingDialog.dismiss();
+                        }
+                    });
                     Log.e(TAG, t.getMessage());
                     showToast("网络请求失败:" + t.getMessage());
                 }

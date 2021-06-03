@@ -1460,7 +1460,7 @@ public class GameVideoActivity extends BaseActivity {
 
     private void dismissWaitingDialog() {
         this.runOnUiThread(() -> {
-            if (waitingDialog != null) {
+            if (waitingDialog != null && !isDestroyed()) {
                 waitingDialog.dismiss();
             }
         });

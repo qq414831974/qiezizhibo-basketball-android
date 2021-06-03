@@ -295,6 +295,9 @@ public class CameraHolder {
     }
 
     public int getCameraMaxZoom() {
+        if (mCameraDevice == null) {
+            return -1;
+        }
         return mCameraDevice.getParameters().getMaxZoom();
     }
 

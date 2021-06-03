@@ -29,6 +29,8 @@ public abstract class BaseScoreBoardView extends FrameLayout {
     protected LinearLayout llHostColor;
     protected LinearLayout llGuestColor;
     protected ImageView ivLogoMask;
+    private Float teamNameHostBaseFontSize;
+    private Float teamNameGuestBaseFontSize;
 
     public BaseScoreBoardView(Context context, int resource) {
         super(context);
@@ -53,8 +55,11 @@ public abstract class BaseScoreBoardView extends FrameLayout {
         if (tvTeamNameHost == null) {
             return;
         }
+        if (teamNameHostBaseFontSize == null) {
+            teamNameHostBaseFontSize = tvTeamNameHost.getTextSize();
+        }
         if (teamName != null && teamName.length() > 7) {
-            float textsize = tvTeamNameHost.getTextSize() - (teamName.length() - 7) * 2.5f;
+            float textsize = teamNameHostBaseFontSize - (teamName.length() - 7) * 2.5f;
             tvTeamNameHost.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
         }
         tvTeamNameHost.setText(teamName);
@@ -64,8 +69,11 @@ public abstract class BaseScoreBoardView extends FrameLayout {
         if (tvTeamNameGuest == null) {
             return;
         }
+        if (teamNameGuestBaseFontSize == null) {
+            teamNameGuestBaseFontSize = tvTeamNameGuest.getTextSize();
+        }
         if (teamName != null && teamName.length() > 7) {
-            float textsize = tvTeamNameGuest.getTextSize() - (teamName.length() - 7) * 2.5f;
+            float textsize = teamNameGuestBaseFontSize - (teamName.length() - 7) * 2.5f;
             tvTeamNameGuest.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
         }
         tvTeamNameGuest.setText(teamName);

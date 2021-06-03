@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.google.gson.JsonSyntaxException;
 import com.qiezitv.common.Constants;
 import com.qiezitv.common.SharedPreferencesUtil;
 import com.qiezitv.dto.AdminUserRefreshTokenRequest;
@@ -83,7 +84,7 @@ public abstract class AutoRefreshTokenCallback<T> implements Callback<T> {
             Response res = null;
             try {
                 res = Response.success(gson.fromJson(response.errorBody().string(), ResponseEntity.class));
-            } catch (IOException e) {
+            } catch (JsonSyntaxException | IOException e) {
                 res = null;
             }
             onFail(res, null);

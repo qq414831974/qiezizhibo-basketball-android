@@ -57,6 +57,9 @@ public class MatchListFragment extends BaseFragment {
     }
 
     public void updateView() {
+        if (getActivity() == null) {
+            return;
+        }
         getActivity().runOnUiThread(() -> {
             if (matchList == null || matchList.isEmpty()) {
                 lvMatchList.setVisibility(View.GONE);
@@ -131,12 +134,18 @@ public class MatchListFragment extends BaseFragment {
             waitingDialog = new WaitingDialog(getActivity(), "");
             waitingDialog.setCanceledOnTouchOutside(false);
         }
+        if (getActivity() == null) {
+            return;
+        }
         getActivity().runOnUiThread(() -> waitingDialog.show());
     }
 
     private void dismissWaitingDialog() {
+        if (getActivity() == null) {
+            return;
+        }
         getActivity().runOnUiThread(() -> {
-            if (waitingDialog != null) {
+            if (waitingDialog != null && !getActivity().isDestroyed()) {
                 waitingDialog.dismiss();
             }
         });
