@@ -135,7 +135,13 @@ public class MyRecorder {
             if (mMediaCodec != null) {
                 int outBufferIndex = mMediaCodec.dequeueOutputBuffer(mBufferInfo, 12000);
                 if (outBufferIndex >= 0) {
-                    ByteBuffer bb = outBuffers[outBufferIndex];
+                    ByteBuffer bb = null;
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                        bb = outBuffers[outBufferIndex];
+                    } else {
+                        bb = mMediaCodec.getOutputBuffer(outBufferIndex);
+                    }
+//                    ByteBuffer bb = outBuffers[outBufferIndex];
                     if (mListener != null) {
                         mListener.onVideoEncode(bb, mBufferInfo);
                     }

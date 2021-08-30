@@ -58,8 +58,8 @@ public abstract class BaseScoreBoardView extends FrameLayout {
         if (teamNameHostBaseFontSize == null) {
             teamNameHostBaseFontSize = tvTeamNameHost.getTextSize();
         }
-        if (teamName != null && teamName.length() > 7) {
-            float textsize = teamNameHostBaseFontSize - (teamName.length() - 7) * 2.5f;
+        if (teamName != null && getTextLength(teamName) > 7) {
+            float textsize = teamNameHostBaseFontSize - (getTextLength(teamName) - 7.0f) * 2.5f;
             tvTeamNameHost.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
         }
         tvTeamNameHost.setText(teamName);
@@ -72,8 +72,8 @@ public abstract class BaseScoreBoardView extends FrameLayout {
         if (teamNameGuestBaseFontSize == null) {
             teamNameGuestBaseFontSize = tvTeamNameGuest.getTextSize();
         }
-        if (teamName != null && teamName.length() > 7) {
-            float textsize = teamNameGuestBaseFontSize - (teamName.length() - 7) * 2.5f;
+        if (teamName != null && getTextLength(teamName) > 7) {
+            float textsize = teamNameGuestBaseFontSize - (getTextLength(teamName) - 7.0f) * 2.5f;
             tvTeamNameGuest.setTextSize(TypedValue.COMPLEX_UNIT_PX, textsize);
         }
         tvTeamNameGuest.setText(teamName);
@@ -186,5 +186,21 @@ public abstract class BaseScoreBoardView extends FrameLayout {
         // Draw view to canvas
         v.draw(c);
         return b;
+    }
+
+    private float getTextLength(String str) {
+        float length = 0.0f;
+        for (char c : str.toCharArray()) {
+            if (isChinese(String.valueOf(c))) {
+                length = length + 1.0f;
+            } else {
+                length = length + 0.5f;
+            }
+        }
+        return length;
+    }
+
+    private boolean isChinese(String charaString) {
+        return charaString.matches("^[\u4E00-\u9FFF]*");
     }
 }

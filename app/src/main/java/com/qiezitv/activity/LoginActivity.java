@@ -17,6 +17,7 @@ import com.qiezitv.model.auth.AccessToken;
 import com.qiezitv.view.WaitingDialog;
 import com.google.gson.Gson;
 
+import java.io.IOException;
 import java.util.Date;
 
 import retrofit2.Call;
@@ -108,7 +109,11 @@ public class LoginActivity extends BaseActivity {
                             }
                         }
                     } else {
-                        showToast("请求失败:" + response.toString());
+                        try {
+                            showToast("请求失败:" + (response.errorBody() != null ? response.errorBody().string() : response.toString()));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
 
